@@ -1,6 +1,8 @@
 {
   "name": "skill-resolve-edit",
-  "version": "0.2.0",
+  "version": "0.3.0",
+  "license": "MIT",
+  "repository": "https://github.com/toorop/skill-resolve-edit",
   "description": "Profile-driven DaVinci Resolve editing workflow driven by Claude through the Resolve MCP (rushes to YouTube package).",
   "author": {
     "name": "Stéphane Depierrepont"

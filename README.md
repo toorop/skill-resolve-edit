@@ -1,5 +1,9 @@
 # skill-resolve-edit
 
+> **Work in progress.** Used for real on one YouTube channel, on Windows, with DaVinci Resolve Studio 21.2. Expect
+> changes between versions, rough edges on other setups (macOS and Linux have never been tried), and French names
+> inside Resolve. Feedback and issues are welcome.
+
 A Claude skill (`resolve-edit`) that edits YouTube videos in **DaVinci Resolve Studio** through the Resolve MCP, from
 the raw camera files to the YouTube publication package, following a **channel profile** (your style, your
 editorial line, your video types, your cameras).
@@ -39,6 +43,7 @@ new timeline built from the rushes; the reference timeline and your FINAL are ne
 - [Troubleshooting](#troubleshooting)
 - [Current limits](#current-limits)
 - [Repository layout](#repository-layout)
+- [License](#license)
 
 ## How it works
 
@@ -387,4 +392,10 @@ skills/resolve-edit/
   scripts/resolve/    scripts run inside Resolve through the MCP
   templates/          decisions.example.json, profile/ (empty channel profile to copy)
 install.ps1           installs the skill into %USERPROFILE%\.claude\skills
+LICENSE               MIT
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 Stéphane Depierrepont. The channel profiles you write are yours and stay outside this
+repository.
