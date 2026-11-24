@@ -4,11 +4,12 @@ Each sequence = list of reference ranges; only the clean material (linear rules 
 Optional bloopers (raw ranges) after a title card. Markers: Purple = sequence start (also the YouTube chapters),
 Red/Blue/Green = review markers inside sequences, Pink = title and bloopers.
 
-Usage: python build_montage.py DECISIONS.json TRANSCRIPT.json CLIPS.json OUT_PLAN.json [--fps 25] [--profile DIR]
+Usage: python build_montage.py DECISIONS.json TRANSCRIPT.json CLIPS.json OUT_PLAN.json [--fps N] [--profile DIR]
+(--fps only for an old clips.json without its rate; default 25)
 """
 import argparse
 
-from common import (Clips, add_profile_arg, ascii_only, is_spoken, load_json, load_settings, load_words, parse_time,
+from common import (Clips, add_profile_arg, fps_arg, ascii_only, is_spoken, load_json, load_settings, load_words, parse_time,
                     save_json, tc)
 from edl_lib import compute_linear, review_markers
 
@@ -19,15 +20,15 @@ def main():
     ap.add_argument("transcript")
     ap.add_argument("clips")
     ap.add_argument("out")
-    ap.add_argument("--fps", type=int, default=25)
+    fps_arg(ap)
     add_profile_arg(ap)
     args = ap.parse_args()
-    fps = args.fps
 
     dec = load_json(args.decisions)
     words = load_words(args.transcript)
-    clips = Clips(args.clips, fps)
     settings = load_settings(args.profile)
+    clips = Clips(args.clips, args.fps, settings)
+    fps = clips.fps
     clean, cuts, demos, report = compute_linear(dec, words, clips, settings)
     mcfg = dec["montage"]
 

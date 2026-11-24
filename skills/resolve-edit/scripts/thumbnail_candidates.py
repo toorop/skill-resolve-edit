@@ -1,6 +1,6 @@
 """Thumbnail search at low token cost: the transcript preselects moments where the presenter SHOWS something
-(cues from the channel profile), ffmpeg extracts one frame per moment from the rushes (through the profile's
-viewing LUT for log footage, if any) and tiles them into contact
+(cues from the channel profile), ffmpeg extracts one frame per moment from the rushes (through the viewing LUT of
+the rush's camera for log / HLG footage, if the profile gives one) and tiles them into contact
 sheets. Claude looks at 1-2 sheets (not dozens of images), picks 3-5 candidates, then exports them full size
 for the user (who makes the real thumbnail from the graded image in Resolve).
 
@@ -18,15 +18,30 @@ import shutil
 import subprocess
 import sys
 
-from common import Clips, add_profile_arg, load_json, load_settings, load_words, save_json, short_name, tc
+from common import Clips, add_profile_arg, camera_rules, fps_arg, load_json, load_settings, load_words, save_json, tc
 
 FONT = r"C:\Windows\Fonts\arial.ttf"
 # From the channel profile's settings.json "thumbnail":
 #   cues        [[regex, weight], ...] moments where an object is shown / the scene is striking (language-specific)
 #   show_delay  seconds after the cue (the object is usually in frame by then), default 1.5
-#   lut         viewing LUT (.cube) for log footage, or null
+#   lut         viewing LUT (.cube) for rushes of a camera without its own "lut", or null
 #   font        font file for the labels (default Arial)
+# and from "cameras": [{"name", "match", "short_name", "lut"}, ...]: the viewing LUT of each camera (log, HLG...).
 CFG = {}
+LUTS = {}  # LUT path -> helper file name copied next to the outputs
+
+
+def lut_for(clips, cams, name):
+    """Viewing LUT of a rush: its camera's "lut" (camera recorded in clips.json, else the first camera whose
+    short_name / match pattern fits the file name), else thumbnail.lut. An explicit "lut": null means none."""
+    cam = next((c for c in cams if c.get("name") and c["name"] == clips.camera(name)), None)
+    if cam is None and not clips.camera(name):
+        cam = next((c for c in cams if (c["_short"] and c["_short"].search(name))
+                    or (c["_match"] and c["_match"].search(name))), None)
+    path = cam["lut"] if cam is not None and "lut" in cam else CFG.get("lut")
+    if path and path not in LUTS:
+        LUTS[path] = f"_lut{len(LUTS)}.cube"
+    return LUTS.get(path) if path else None
 
 
 def final_position(final_items, clip, src_frame):
@@ -37,8 +52,10 @@ def final_position(final_items, clip, src_frame):
     return it[3] + src_frame - it[5]
 
 
-def ffmpeg_frame(rush, seconds, out, width, label, workdir):
-    vf = ("lut3d=_lut.cube," if CFG.get("lut") else "") + f"scale={width}:-2"
+def ffmpeg_frame(rush, seconds, out, width, label, workdir, lut=None):
+    if lut and not os.path.exists(os.path.join(workdir, lut)):  # copied next to the outputs: no path escaping
+        shutil.copy(next(p for p, f in LUTS.items() if f == lut), os.path.join(workdir, lut))
+    vf = (f"lut3d={lut}," if lut else "") + f"scale={width}:-2"
     if label:
         label = label.replace(":", r"\:")  # ':' separates filter options
         vf += (f",drawtext=fontfile=_font.ttf:text='{label}':x=10:y=10:fontsize={width // 14}:"
@@ -52,8 +69,8 @@ def main():
         run()
     finally:  # remove the helper copies (LUT, font) from the output folder
         out = os.path.abspath(sys.argv[5]) if len(sys.argv) > 5 else None
-        for f in ("_lut.cube", "_font.ttf"):
-            if out and os.path.exists(os.path.join(out, f)):
+        for f in os.listdir(out) if out and os.path.isdir(out) else []:
+            if f == "_font.ttf" or (f.startswith("_lut") and f.endswith(".cube")):
                 os.remove(os.path.join(out, f))
 
 
@@ -65,29 +82,30 @@ def run():
     ap.add_argument("rushes")
     ap.add_argument("out")
     ap.add_argument("--max", type=int, default=20)
-    ap.add_argument("--fps", type=int, default=25)
+    fps_arg(ap)
     ap.add_argument("--export", default="")
     add_profile_arg(ap)
     args = ap.parse_args()
-    CFG.update(load_settings(args.profile).get("thumbnail") or {})
+    settings = load_settings(args.profile)
+    CFG.update(settings.get("thumbnail") or {})
+    cams = camera_rules(settings)
     args.out, args.rushes = os.path.abspath(args.out), os.path.abspath(args.rushes)  # ffmpeg runs with cwd=out
     os.makedirs(args.out, exist_ok=True)
-    if CFG.get("lut"):  # copied next to the outputs: no path escaping in filters
-        shutil.copy(CFG["lut"], os.path.join(args.out, "_lut.cube"))
     shutil.copy(CFG.get("font") or FONT, os.path.join(args.out, "_font.ttf"))
-    fps = args.fps
+    clips = Clips(args.clips, args.fps, settings)
+    fps = clips.fps
 
     if args.export:
         cands = {c["id"]: c for c in load_json(os.path.join(args.out, "candidates.json"))}
         for i in (int(x) for x in args.export.split(",")):
             c = cands[i]
             out = os.path.join(args.out, f"vignette_{i:02d}_{c['final_tc'].replace(':', '')}.png")
-            ffmpeg_frame(os.path.join(args.rushes, c["rush"]), c["src_seconds"], out, 1920, None, args.out)
+            ffmpeg_frame(os.path.join(args.rushes, clips.file(c["rush"])), c["src_seconds"], out, 1920, None, args.out,
+                         lut_for(clips, cams, c["rush"]))
             print(out)
         return
 
     words = load_words(args.transcript)
-    clips = Clips(args.clips, fps)
     final = load_json(args.final)
     titles = [it[3] for it in final["items"] if it[1] == "Text+"]
     items = [it for it in final["items"] if it[2] == "video" and it[1] != "Text+"
@@ -128,10 +146,11 @@ def run():
     cands = []
     for i, c in enumerate(chosen, 1):
         final_tc = tc(c["final_frame"], fps, frames=True)
-        ffmpeg_frame(os.path.join(args.rushes, c["rush"]), c["src_seconds"], os.path.join(args.out, f"_t{i:02d}.png"),
-                     384, f"{i}  {final_tc[3:8]}", args.out)
+        ffmpeg_frame(os.path.join(args.rushes, clips.file(c["rush"])), c["src_seconds"],
+                     os.path.join(args.out, f"_t{i:02d}.png"), 384, f"{i}  {final_tc[3:8]}", args.out,
+                     lut_for(clips, cams, c["rush"]))
         cands.append({"id": i, "final_tc": final_tc, "reference_tc": tc(c["ref"], fps), "rush": c["rush"],
-                      "rush_short": short_name(c["rush"]), "src_seconds": round(c["src_seconds"], 3),
+                      "rush_short": clips.short(c["rush"]), "src_seconds": round(c["src_seconds"], 3),
                       "cue": c["cue"], "weight": c["weight"], "context": c["context"]})
     save_json(os.path.join(args.out, "candidates.json"), cands, indent=1)
     per = 20

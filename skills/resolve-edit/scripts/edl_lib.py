@@ -3,7 +3,7 @@
 All times are REFERENCE timeline seconds; pieces are [clip_name, src_in, src_out) in frames (src_out exclusive,
 which is exactly what Resolve's AppendToTimeline endFrame expects).
 """
-from common import Clips, ascii_only, is_spoken, parse_time, short_name, tc
+from common import Clips, ascii_only, is_spoken, parse_time, tc
 
 # Generic defaults. Layering: these < channel profile settings.json "linear" < the video's decisions.json "linear".
 LINEAR_DEFAULTS = {
@@ -47,7 +47,7 @@ def compute_linear(decisions, words, clips: Clips, settings=None):
         inside = [w for w in words if s <= w["start"] * fps < e and not removed(w["start"]) and is_spoken(w)]
         if not inside:
             continue
-        sh = short_name(name)
+        sh = clips.short(name)
         if sh not in cfg["keep_head"]:
             head_end = inside[0]["start"] - cfg["head_pad"]
             if head_end > s / fps:

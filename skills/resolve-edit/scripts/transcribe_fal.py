@@ -17,9 +17,12 @@ import argparse
 import json
 import mimetypes
 import os
+import ssl
+import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from common import add_profile_arg, load_json, load_settings, save_json
@@ -31,7 +34,31 @@ REST = "https://rest.alpha.fal.ai"
 QUEUE = "https://queue.fal.run"
 
 
-def http(method, url, key=None, body=None, content_type="application/json", timeout=600):
+def warm_windows_roots(url):
+    """Windows installs most root certificates only when a Windows program first meets them; Python's ssl reads the
+    store but cannot trigger that download, so a host signed by a root this PC has never seen fails with
+    CERTIFICATE_VERIFY_FAILED (seen 2026-11-24 with fal's storage host v3.fal.media, SSL.com root). One request with
+    curl.exe (built into Windows 10+, uses the Windows TLS stack) makes Windows fetch the root; then Python works."""
+    if os.name != "nt":
+        return False
+    host = urllib.parse.urlsplit(url)
+    try:
+        subprocess.run(["curl.exe", "-s", "-o", os.devnull, f"{host.scheme}://{host.netloc}/"], timeout=30, check=False)
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def http(method, url, key=None, body=None, content_type="application/json", timeout=600, _retry=True):
+    try:
+        return _http(method, url, key, body, content_type, timeout)
+    except urllib.error.URLError as e:
+        if _retry and isinstance(e.reason, ssl.SSLCertVerificationError) and warm_windows_roots(url):
+            return http(method, url, key, body, content_type, timeout, _retry=False)
+        raise
+
+
+def _http(method, url, key=None, body=None, content_type="application/json", timeout=600):
     data = body if isinstance(body, (bytes, type(None))) else json.dumps(body).encode()
     req = urllib.request.Request(url, data=data, method=method)
     if key:

@@ -19,7 +19,7 @@ tags): read its publication file before writing anything.
 python SKILL/scripts/thumbnail_candidates.py transcripts/transcript.json transcripts/clips.json edl/final_dump.json rushes publication/vignettes
 ```
 - The transcript preselects ~20 moments where the presenter shows something (profile `thumbnail.cues`), only if
-  still present in FINAL; ffmpeg extracts one frame each (through the profile's viewing LUT for log footage,
+  still present in FINAL; ffmpeg extracts one frame each (through the viewing LUT of the rush's camera, profile `cameras`,
   preview only) and tiles them in `sheet_1.png` with number + FINAL timecode.
 - DO NOT look at the sheet yourself (token saving; the user chooses): give the user the sheet path and the list
   of candidates (id, FINAL timecode, cue, context) and let THEM pick. Only analyse images if the user asks.

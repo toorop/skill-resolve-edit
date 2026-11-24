@@ -7,27 +7,28 @@ regex}), since they depend on the language and on the channel's editorial policy
 COUNT), retake (signs of failed takes / off-topic).
 Each alternative is matched from the START of a word (the scan adds a leading word boundary).
 
-Usage: python flag_passages.py TRANSCRIPT.json CLIPS.json [--fps 25] [--profile DIR] > flags.txt
+Usage: python flag_passages.py TRANSCRIPT.json CLIPS.json [--fps N] [--profile DIR] > flags.txt
 """
 import argparse
 import re
 from collections import defaultdict
 
-from common import Clips, add_profile_arg, load_settings, load_words, short_name, tc
+from common import Clips, add_profile_arg, fps_arg, load_settings, load_words, tc
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("transcript")
     ap.add_argument("clips")
-    ap.add_argument("--fps", type=int, default=25)
+    fps_arg(ap)
     add_profile_arg(ap)
     args = ap.parse_args()
-    patterns = load_settings(args.profile).get("flags") or {}
+    settings = load_settings(args.profile)
+    patterns = settings.get("flags") or {}
     if not patterns:
         raise SystemExit('No "flags" patterns in the channel profile settings.json: nothing to scan.')
 
     words = load_words(args.transcript)
-    clips = Clips(args.clips, args.fps)
+    clips = Clips(args.clips, args.fps, settings)
     text, index = "", []  # char offset -> word index
     for w in words:
         index.append(len(text))
@@ -41,7 +42,7 @@ def main():
     for cat in patterns:
         print(f"\n## {cat} ({len(hits[cat])})")
         for t, kw, ctx in hits[cat]:
-            print(f"  {tc(t, args.fps)} {short_name(clips.at(t) or '?'):6} [{kw}]  ...{ctx}...")
+            print(f"  {tc(t, clips.fps)} {(clips.short(clips.at(t)) if clips.at(t) else '?'):6} [{kw}]  ...{ctx}...")
 
 
 if __name__ == "__main__":

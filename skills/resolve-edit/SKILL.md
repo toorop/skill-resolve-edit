@@ -57,16 +57,18 @@ before Step 1 — or, if the video folder is stored outside the channel folder, 
 
 ## Video working folder = the session's working directory
 
-For each video the user creates a folder, puts the camera files in `rushes/`, and opens Claude IN that folder.
+For each video the user creates a folder, puts the camera files in a rushes sub-folder (usually `rushes/`, any
+name and any case; if there is no obvious one, ask), and opens Claude IN the video folder. Inside the rushes folder
+the layout is free: everything together, one sub-folder per camera, per day... every sub-folder is searched.
 Everything you produce goes in it. Your auto-memory is per folder, so a new video starts with EMPTY memory:
 this skill, its references and the channel profile are the only carried-over knowledge (keep them up to date,
 see Step 9).
 
 ```
 <video folder>/            (= working directory; the profile pointer is here or in a parent folder)
-  rushes/                  camera files (e.g. Sony C####.MP4 + XML sidecars)
+  rushes/                  camera files, any cameras, any sub-folders (sidecars and proxies are skipped)
   audio/                   reference audio export + 16 kHz parts for transcription
-  transcripts/             clips.json, transcript.json (merged), transcript_lisible.txt, flags.txt
+  transcripts/             rushes.json (inventory), clips.json, transcript.json (merged), transcript_lisible.txt, flags.txt
   edl/                     plans (linear_vN.json, montage_vN.json), final_dump.json
   publication/             youtube.md (copy-paste package)
   decisions.json           per-video decisions (start from the profile's example, else templates/decisions.example.json)
@@ -83,12 +85,26 @@ see Step 9).
 - Ask the user to check that **timeline playback has sound**: a missing or frozen audio output device makes every
   render hang at 0% (`references/resolve.md`; the profile may name the device and its fix).
 - Ask (one by one): video type (from the profile's video types), rushes to exclude, anything special.
+- If several cameras were used (or the rushes folder suggests it), ask whether their clocks were right: the
+  reference is sorted by recording time. A camera with a wrong clock gets a `clock_offset` in the profile.
 
-### Step 1 — Import and reference timeline
-Read one camera sidecar (if any) for format info (resolution, fps, log profile). Then run
-`resolve/import_reference.py` with `rushes_dir`, `exclude`, `clips_out = transcripts/clips.json`.
-Check: frames == sum of rushes, no gaps, timeline format == rushes, start TC 00:00:00:00. Never touch color nor
-audio processing (done by the user unless the profile says otherwise).
+### Step 1 — Inventory, import and reference timeline
+1. `python SKILL/scripts/probe_rushes.py <rushes folder> transcripts/rushes.json` reads every video file of the
+   folder and its sub-folders with ffprobe, recognises each camera (profile `cameras`, else its metadata), gives
+   short names, sorts by recording time and proposes the reference format. Show the user its table (local
+   recording time, camera, short name, format, length) and its warnings, and get the order validated. Watch for:
+   rushes of two cameras that overlap in time (simultaneous filming: multicam is not handled yet, ask which to
+   keep), a camera whose times look shifted (wrong clock: `clock_offset`), files without a recording time, variable
+   frame rate (phones), vertical rushes, unknown cameras (offer to add them to the profile's `cameras`).
+2. **Reference format** = the lowest common one, as proposed by the inventory: the smallest rate that divides all
+   the others (25p for 25p + 50p) and the smallest frame size (the reference only serves the transcript and the
+   scene index). If the rates have no common divisor (24/25/30), ask. **The rate chosen here stays the rate of
+   every timeline of the video** (plans count reference frames); the size can change for the montage (Step 7).
+3. `resolve/import_reference.py` with `rushes_json = transcripts/rushes.json`, `exclude` (short names),
+   `clips_out = transcripts/clips.json` (and `fps`/`width`/`height` if the user changed the proposal).
+   Check: no gaps, no `rush_length_mismatch`, timeline format == the validated one, start TC 00:00:00:00. Never
+   touch color nor audio processing (done by the user unless the profile says otherwise). Each rush keeps its own
+   rate: Resolve plays a 50p rush at real speed in a 25p timeline, nothing is re-encoded.
 
 ### Step 2 — Audio export
 `resolve/render_audio.py` (`target_dir = audio`, FLAC 16-bit). A full 35 min export takes ~40 s. If still
@@ -128,6 +144,9 @@ Present it as a table with approximate durations; validate; write `decisions.jso
 `bloopers`.
 
 ### Step 7 — Build the montage
+Before building, propose the montage timeline format: same rate as the reference (always); size by default the
+largest size of the rushes used (e.g. UHD), or what the user prefers. Pass `width`/`height` to
+`build_timeline.py` when it differs from the reference.
 `build_montage.py` → `resolve/build_timeline.py` (`name = "02 - MONTAGE v1"`). It adds the title card,
 bloopers, audio cross fades (4 frames), YouTube loudness normalization (relative) and markers, and verifies
 everything. Then offer to duplicate it as `"03 - FINAL"` (`timeline.DuplicateTimeline`) for the user's manual

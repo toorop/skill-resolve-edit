@@ -10,11 +10,18 @@
 #   normalize         default "YouTube" (mode of Timeline.NormalizeAudioLevel, RELATIVE set-level); None to skip
 #   markers           default True
 #
+#   width, height     optional timeline size (e.g. the montage in UHD while the reference was smaller); the rate
+#                     always stays the reference's (plans are counted in reference frames)
+#
+# Plans count every frame at the TIMELINE rate (piece in/out = offsets from the start of the rush). AppendToTimeline
+# counts startFrame/endFrame in the RUSH's own frames (measured on 21.2: source frames 500-750 of a 50p rush = 125
+# frames of a 25p timeline), while GetLeftOffset/GetDuration read back in timeline frames: pieces are converted
+# with each rush's rate here, and verified in timeline frames.
 # API facts this relies on: AppendToTimeline endFrame is EXCLUSIVE; InsertFusionTitleIntoTimeline("Text+") inserts
-# at the playhead on V1 (125 frames); accented Text+ text must go through comp.Execute Lua with decimal escapes.
+# at the playhead on V1 (125 frames at 25p); accented Text+ text must go through comp.Execute Lua with decimal escapes.
 import json
 
-_A = dict({"crossfade_frames": 4, "normalize": "YouTube", "markers": True}, **ARGS)
+_A = dict({"crossfade_frames": 4, "normalize": "YouTube", "markers": True, "width": None, "height": None}, **ARGS)
 with open(_A["plan"], encoding="utf-8") as _f:
     _P = json.load(_f)
 
@@ -45,16 +52,39 @@ if _A["name"] in names:
 mp.SetCurrentFolder(subs["Timelines"])
 tl = mp.CreateEmptyTimeline(_A["name"])
 project.SetCurrentTimeline(tl)
+_fps = float(_P.get("fps") or tl.GetSetting("timelineFrameRate"))
+if float(tl.GetSetting("timelineFrameRate")) != _fps:
+    tl.SetSetting("useCustomSettings", "1")
+    tl.SetSetting("timelineFrameRate", ("%g" % _fps))
+if _A["width"] and int(tl.GetSetting("timelineResolutionWidth")) != int(_A["width"]):
+    tl.SetSetting("useCustomSettings", "1")
+    tl.SetSetting("timelineResolutionWidth", str(_A["width"]))
+    tl.SetSetting("timelineResolutionHeight", str(_A["height"]))
+if float(tl.GetSetting("timelineFrameRate")) != _fps:
+    raise Exception("timeline rate %s differs from the plan's %s" % (tl.GetSetting("timelineFrameRate"), _fps))
 tl.SetStartTimecode("00:00:00:00")
 base = tl.GetStartFrame()
-mp.AppendToTimeline([{"mediaPoolItem": items[n], "startFrame": i, "endFrame": o} for n, i, o in _P["pieces"]])
+_nom = int(round(_fps))
+_ratio = {}
+
+
+def _src(n, f):
+    # timeline frames -> frames of the rush (its own rate)
+    if n not in _ratio:
+        _ratio[n] = float(items[n].GetClipProperty("FPS") or _fps) / _fps
+    r = _ratio[n]
+    return f if r == 1 else int(round(f * r))
+
+
+mp.AppendToTimeline([{"mediaPoolItem": items[n], "startFrame": _src(n, i), "endFrame": _src(n, o)}
+                     for n, i, o in _P["pieces"]])
 main_frames = sum(o - i for _, i, o in _P["pieces"])
 
 markers = list(_P.get("markers", []))
 title_len = 0
 if _P.get("title"):
     f = main_frames
-    tl.SetCurrentTimecode("%02d:%02d:%02d:%02d" % (f // 90000, f // 1500 % 60, f // 25 % 60, f % 25))
+    tl.SetCurrentTimecode("%02d:%02d:%02d:%02d" % (f // (3600 * _nom), f // (60 * _nom) % 60, f // _nom % 60, f % _nom))
     title = tl.InsertFusionTitleIntoTimeline("Text+")
     title_len = title.GetDuration()
     comp = title.GetFusionCompByIndex(1)
@@ -64,7 +94,8 @@ if _P.get("title"):
     pos = main_frames + title_len
     tail = []
     for n, i, o in _P["tail_pieces"]:  # recordFrame places them after the (silent) title, keeping audio in sync
-        tail.append({"mediaPoolItem": items[n], "startFrame": i, "endFrame": o, "recordFrame": base + pos, "trackIndex": 1})
+        tail.append({"mediaPoolItem": items[n], "startFrame": _src(n, i), "endFrame": _src(n, o), "recordFrame": base + pos,
+                     "trackIndex": 1})
         pos += o - i
     mp.AppendToTimeline(tail)
     markers += [[main_frames + title_len + off, c, n, t] for off, c, n, t in _P.get("tail_markers", [])]
@@ -73,9 +104,12 @@ if _P.get("title"):
 v = [x for x in tl.GetItemListInTrack("video", 1) if x.GetName() != "Text+"]
 a = [x for x in tl.GetItemListInTrack("audio", 1) if x.GetType() == "audio"]
 expected = _P["pieces"] + _P.get("tail_pieces", [])
+_tol = lambda n: 0 if _ratio.get(n, 1) == int(_ratio.get(n, 1)) else 1  # non-integer rate ratios round by 1 frame
 bad = [k for k, ((n, i, o), x, y) in enumerate(zip(expected, v, a))
-       if x.GetName() != n or x.GetLeftOffset() != i or x.GetDuration() != o - i
-       or y.GetLeftOffset() != i or y.GetDuration() != o - i or y.GetStart() != x.GetStart()]
+       if x.GetName() != n or abs(x.GetLeftOffset() - i) > _tol(n) or abs(x.GetDuration() - (o - i)) > _tol(n)
+       or abs(y.GetLeftOffset() - i) > _tol(n) or abs(y.GetDuration() - (o - i)) > _tol(n) or y.GetStart() != x.GetStart()]
+if len(v) != len(expected) or len(a) != len(expected):
+    bad.append("count: %d video / %d audio items for %d pieces" % (len(v), len(a), len(expected)))
 allv = tl.GetItemListInTrack("video", 1)
 gaps = [k for k in range(1, len(allv)) if allv[k].GetStart() != allv[k - 1].GetEnd()]
 
@@ -106,7 +140,8 @@ if _A["markers"]:
         nm += 1 if tl.AddMarker(int(f), col, n, t, 1) else 0
 
 resolve.GetProjectManager().SaveProject()
-result = {"timeline": _A["name"], "frames": tl.GetEndFrame() - base,
+result = {"timeline": _A["name"], "fps": _fps, "size": [tl.GetSetting("timelineResolutionWidth"), tl.GetSetting("timelineResolutionHeight")],
+          "rush_rates": sorted({round(r * _fps, 3) for r in _ratio.values()}), "frames": tl.GetEndFrame() - base,
           "expected_frames": main_frames + title_len + sum(o - i for _, i, o in _P.get("tail_pieces", [])),
           "pieces": len(v), "bad_pieces": bad, "gaps": gaps, "title_frames": title_len,
           "crossfades": xf, "normalized_volume_db": norm, "markers": nm}

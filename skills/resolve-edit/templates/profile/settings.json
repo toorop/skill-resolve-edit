@@ -9,6 +9,35 @@
     "keyterms": []
   },
 
+  // Your cameras, any number (rushes may mix them, in any sub-folders). For each one:
+  //   name          shown in the reports
+  //   match         regex searched in the file path and its metadata (encoder, make/model...) to recognise it
+  //   short_name    regex giving the rush short name (its groups joined, else the whole match); default: file name
+  //   lut           viewing LUT (.cube) for its log / HLG footage on the thumbnail contact sheet, or null
+  //   clock_offset  seconds added to its recording times if its clock is wrong (rushes are sorted by time)
+  // The sound used is always the one inside the video files. Delete the examples you don't need.
+  "cameras": [
+    {
+      "name": "Sony (example)",
+      "match": "XAVC",
+      "short_name": "C\\d{4}",
+      "lut": null,
+      "clock_offset": 0
+    },
+    {
+      "name": "DJI action camera (example)",
+      "match": "DJI",
+      "short_name": "(DJI)_\\d{14}_(\\d{4})",
+      "lut": null,
+      "clock_offset": 0
+    }
+  ],
+
+  // Files to skip inside the rushes folder (regexes on their path), e.g. camera proxies copied with a whole card
+  "rushes": {
+    "ignore": ["(^|/)SUB/"]
+  },
+
   "linear": {
     "gap_min": 2.0,
     "keep_air": 0.5,
@@ -35,7 +64,7 @@
       ["look at|you can see|as you can see", 1]
     ],
     "show_delay": 1.5,
-    // Viewing LUT (.cube) for log footage, or null
+    // Viewing LUT for rushes of a camera without its own "lut" (see "cameras"), or null
     "lut": null
   },
 
