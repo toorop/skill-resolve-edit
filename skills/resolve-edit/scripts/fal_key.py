@@ -112,6 +112,9 @@ def masked_input(prompt):
 
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "check"
+    if cmd in ("set", "delete") and os.name != "nt":
+        raise SystemExit("The key store used here is the Windows Credential Manager. On this system, set the FAL_KEY "
+                         "environment variable for the terminal that runs Claude Code instead (not tested yet).")
     if cmd == "set":
         pasted = False
         if "--clipboard" in sys.argv:  # read the clipboard directly

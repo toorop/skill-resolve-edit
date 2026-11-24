@@ -79,9 +79,14 @@ see Step 9).
 ### Step 0 — Check the setup and load the profile
 - Find and read the channel profile: `profile.md` entirely, then the files it says to read at this step.
 - `get_resolve_status` on the Resolve MCP; confirm the open project with the user.
-- `ffmpeg -version`, and that the fal.ai key exists: `python SKILL/scripts/fal_key.py check` (prints only its
-  length). If missing, ask the user to run `python SKILL/scripts/fal_key.py set` THEMSELVES in a terminal (hidden
-  input, stored in the Windows Credential Manager). Never ask for the key in chat.
+- `python SKILL/scripts/check_setup.py` (from the video folder): Python, ffmpeg / ffprobe and the features the
+  scripts need, the fal.ai key (presence and length only), HTTPS access to fal.ai, the profile and its LUT files.
+  For each missing tool it prints the install command for this system (winget / brew / apt): give it to the user
+  and ask them to install it, then to restart Claude Code (a running session does not see a new PATH). If `python`
+  itself is missing, the same commands are in the README. If the key is missing, ask the user to run
+  `python SKILL/scripts/fal_key.py set` THEMSELVES in a terminal (hidden input, stored in the Windows Credential
+  Manager; other systems: the `FAL_KEY` environment variable). Never ask for the key in chat.
+- On macOS or Linux, tell the user the skill is tested on Windows only, and report what breaks.
 - Ask the user to check that **timeline playback has sound**: a missing or frozen audio output device makes every
   render hang at 0% (`references/resolve.md`; the profile may name the device and its fix).
 - Ask (one by one): video type (from the profile's video types), rushes to exclude, anything special.

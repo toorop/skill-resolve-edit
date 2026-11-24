@@ -20,12 +20,24 @@ import sys
 
 from common import Clips, add_profile_arg, camera_rules, fps_arg, load_json, load_settings, load_words, save_json, tc
 
-FONT = r"C:\Windows\Fonts\arial.ttf"
+FONTS = [r"C:\Windows\Fonts\arial.ttf",                                                     # Windows
+         "/System/Library/Fonts/Supplemental/Arial.ttf", "/Library/Fonts/Arial.ttf",         # macOS
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans.ttf",  # Linux
+         "/usr/share/fonts/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"]
+
+
+def default_font():
+    font = next((f for f in FONTS if os.path.isfile(f)), None)
+    if not font:
+        raise SystemExit('No label font found: set "thumbnail": {"font": "<path of a .ttf>"} in the profile settings.')
+    return font
+
+
 # From the channel profile's settings.json "thumbnail":
 #   cues        [[regex, weight], ...] moments where an object is shown / the scene is striking (language-specific)
 #   show_delay  seconds after the cue (the object is usually in frame by then), default 1.5
 #   lut         viewing LUT (.cube) for rushes of a camera without its own "lut", or null
-#   font        font file for the labels (default Arial)
+#   font        font file for the labels (default: Arial on Windows / macOS, DejaVu Sans on Linux)
 # and from "cameras": [{"name", "match", "short_name", "lut"}, ...]: the viewing LUT of each camera (log, HLG...).
 CFG = {}
 LUTS = {}  # LUT path -> helper file name copied next to the outputs
@@ -91,7 +103,7 @@ def run():
     cams = camera_rules(settings)
     args.out, args.rushes = os.path.abspath(args.out), os.path.abspath(args.rushes)  # ffmpeg runs with cwd=out
     os.makedirs(args.out, exist_ok=True)
-    shutil.copy(CFG.get("font") or FONT, os.path.join(args.out, "_font.ttf"))
+    shutil.copy(CFG.get("font") or default_font(), os.path.join(args.out, "_font.ttf"))
     clips = Clips(args.clips, args.fps, settings)
     fps = clips.fps
 

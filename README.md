@@ -26,7 +26,9 @@ new timeline built from the rushes; the reference timeline and your FINAL are ne
 ## Contents
 - [How it works](#how-it-works)
 - [Requirements](#requirements)
+- [Installing the tools](#installing-the-tools)
 - [Installation (Windows)](#installation-windows)
+- [macOS and Linux](#macos-and-linux)
 - [First use: set up your channel profile](#first-use-set-up-your-channel-profile)
 - [Starting a new video](#starting-a-new-video)
 - [The workflow in detail](#the-workflow-in-detail)
@@ -61,11 +63,39 @@ new timeline built from the rushes; the reference timeline and your FINAL are ne
 - **DaVinci Resolve Studio 21.1 or later** (the paid version: the MCP server and external scripting are Studio
   only), with its MCP server connected to Claude. Tested on 21.2.
 - **Claude Code** (desktop app or CLI).
-- **Python 3** (standard library only) and **ffmpeg / ffprobe** in the PATH.
+- **Python 3.8 or later** (standard library only: nothing to `pip install`).
+- **ffmpeg and ffprobe** in the PATH, a full build (the scripts use the soxr resampler and the lut3d, drawtext and
+  tile filters).
 - A **fal.ai** account and API key (pay per use, about $0.008 per audio minute for the transcript).
-- **Windows** for now (the key is stored in the Windows Credential Manager).
+- **Windows 10 or 11**: the only system the skill has been tested on so far (see [macOS and Linux](#macos-and-linux)).
 - **Camera clocks set right** when you film with several cameras: the reference timeline is sorted by recording
   time (a wrong clock can be compensated in the profile, see [Several cameras](#several-cameras-any-camera)).
+
+## Installing the tools
+
+On Windows, in a terminal (PowerShell or Command Prompt), with `winget` (built into Windows 10 and 11):
+```bat
+winget install Python.Python.3.13
+winget install Gyan.FFmpeg
+winget install Git.Git
+```
+`Gyan.FFmpeg` is the full build (soxr, lut3d, drawtext included). **Close and reopen the terminal and Claude Code
+afterwards**: programs already running don't see the new PATH. Check with `python --version` and `ffmpeg -version`.
+
+| | Windows | macOS ([Homebrew](https://brew.sh)) | Linux (Debian / Ubuntu) |
+|---|---|---|---|
+| Python 3 | `winget install Python.Python.3.13` | `brew install python` | `sudo apt install python3` |
+| ffmpeg + ffprobe | `winget install Gyan.FFmpeg` | `brew install ffmpeg` | `sudo apt install ffmpeg` |
+| git | `winget install Git.Git` | `brew install git` | `sudo apt install git` |
+
+Then check the whole setup, from a video folder (or anywhere, with `--profile`):
+```bat
+python skills\resolve-edit\scripts\check_setup.py
+```
+It checks Python, ffmpeg and ffprobe and their needed features, the fal.ai key (only whether it is there and its
+length), HTTPS access to fal.ai, the channel profile and its LUT files, and prints the install command of anything
+missing for your system. Claude runs it at Step 0 of every video. DaVinci Resolve is checked by Claude through
+the MCP.
 
 ## Installation (Windows)
 
@@ -87,6 +117,21 @@ Masked input (one `*` per character, Ctrl+V pastes) or `set --clipboard`; the cl
 The key goes to the Windows Credential Manager (entry `resolve-edit/fal`). `fal_key.py check` shows only its
 length, `fal_key.py delete` removes it. The `FAL_KEY` environment variable is accepted as a fallback (e.g. on
 another OS). Claude never sees, asks for or prints the key.
+
+## macOS and Linux
+
+**Only tested on Windows so far.** Most of the skill is portable (Python standard library, ffmpeg, the Resolve
+MCP, which DaVinci Resolve Studio has on all three systems), but expect rough edges:
+- **Installing**: there is no installer script. Copy or link the skill folder:
+  `ln -s "$PWD/skills/resolve-edit" ~/.claude/skills/resolve-edit` (a link: no need to reinstall after `git pull`).
+- **fal.ai key**: the Windows Credential Manager does not exist there. Set `FAL_KEY` in the environment of the
+  terminal that starts Claude Code (`fal_key.py check` then finds it). Keep it out of shared shell files if you
+  can, e.g. load it from your system keychain in that terminal only.
+- **Contact sheet font**: Arial (macOS) or DejaVu Sans / Liberation Sans (Linux) are found automatically; else set
+  `thumbnail.font` in the profile.
+- **Paths in the profile** (viewing LUTs) are per computer: point them to your Resolve LUT folder (macOS:
+  `/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/`; Linux: `/opt/resolve/LUT/`).
+- Please report what breaks (issues welcome).
 
 ## First use: set up your channel profile
 
@@ -284,6 +329,7 @@ Local scripts (`skills/resolve-edit/scripts/`, Python stdlib + ffmpeg; they find
 
 | Script | Does |
 |---|---|
+| `check_setup.py` | Step 0: tools, ffmpeg features, fal.ai key, network, profile; install commands for what is missing |
 | `probe_rushes.py RUSHES OUT.json` | inventory of all rushes (sub-folders included), cameras, order, proposed format, warnings |
 | `prepare_audio.py AUDIO CLIPS OUT_DIR` | 16 kHz mono WAV, split at rush boundaries under the fal.ai limit |
 | `transcribe_fal.py MANIFEST OUT.json` | Scribe v2 on fal.ai, parts merged on the reference timeline |
@@ -301,6 +347,8 @@ Resolve-side scripts (`scripts/resolve/`), run by Claude through the MCP tool `r
 
 ## Troubleshooting
 
+- **`ffmpeg` or `python` not found although installed**: the terminal or Claude Code was open during the
+  install. Close and reopen them. `check_setup.py` tells what is missing and how to install it.
 - **Render stuck at 0 %, silent playback**: Resolve's audio output device is missing or frozen (e.g. a USB audio
   interface after a Linux dual boot). Unplug and replug it, restart Resolve. Not the disk, not the GPU.
 - **`CERTIFICATE_VERIFY_FAILED` during the transcript**: Windows installs some root certificates only when a
@@ -317,8 +365,8 @@ Resolve-side scripts (`scripts/resolve/`), run by Claude through the MCP tool `r
 ## Current limits
 
 - **Cameras filming at the same time** (multicam) are not handled yet: one camera at a time.
-- **Windows only**: the fal.ai key uses the Windows Credential Manager (`FAL_KEY` works elsewhere, untested); the
-  default label font is `C:\Windows\Fonts\arial.ttf` (override: `thumbnail.font`).
+- **Tested on Windows only**: macOS and Linux should mostly work but have never been tried (see
+  [macOS and Linux](#macos-and-linux)).
 - **Resolve names and review markers are in French**: timelines `00 - REFERENCE (ne pas modifier)`,
   `01 - LINEAIRE vN`, `02 - MONTAGE vN`, `03 - FINAL`, bin `Rushes/Non retenus`, markers "Passage retire",
   "Blanc raccourci", "Raccord deplace"... They work in any language but read oddly elsewhere.
