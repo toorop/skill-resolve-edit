@@ -1,0 +1,25 @@
+# Secrets
+.env
+*.env
+.env.*
+secrets*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Working media and outputs (never commit project data)
+*.wav
+*.flac
+*.mp3
+*.mp4
+*.mov
+*.MP4
+
+# OS / editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

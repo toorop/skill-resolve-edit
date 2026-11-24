@@ -1,0 +1,29 @@
+{
+ "video": "12 - example video",
+ "type": "object-presentation",
+ "fps": 25,
+ "linear": {
+  "keep_head": ["C0101"],
+  "keep_tail": [],
+  "remove": [
+   {"label": "C0101 failed intro, redone in C0102", "start": "00:00:12:10", "end": "00:00:31:02"},
+   {"label": "C0104 false start 'So this one... sorry'", "start": 412.5, "end": 418.9},
+   {"label": "C0107 whole (cameraman)", "start": 1015.2, "end": 1040.0}
+  ]
+ },
+ "montage": {
+  "sequences": [
+   {"title": "Arrival", "ranges": [[0.0, 24.0]]},
+   {"title": "Intro", "ranges": [[24.0, 70.0]]},
+   {"title": "First object", "ranges": [[70.0, 180.0]]},
+   {"title": "Second object (+ add-on shot later)", "ranges": [[300.0, 412.5], [900.0, 960.0]]},
+   {"title": "Third object", "ranges": [[180.0, 300.0]]},
+   {"title": "Best piece + outro", "ranges": [[960.0, 1015.2]]}
+  ],
+  "blooper_title": "Bloopers",
+  "bloopers": [
+   {"label": "Blooper 1 - failed intro (C0101)", "start": 12.4, "end": 31.0},
+   {"label": "Blooper 2 - cameraman (C0107)", "start": "before_first_word", "end": 1040.0}
+  ]
+ }
+}

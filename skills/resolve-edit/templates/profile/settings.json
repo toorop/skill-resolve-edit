@@ -1,0 +1,45 @@
+// Channel settings read by the resolve-edit scripts. Lines starting with // are comments.
+// Linear cut layering: skill defaults < this file < "linear" of the video's decisions.json.
+// Keys and meaning: references/profile.md of the skill.
+{
+  // Transcription language code (e.g. "en", "fr"); remove the key to let Scribe detect it
+  "language": "en",
+  "transcription": {
+    // Names Scribe should spell right (+30% cost)
+    "keyterms": []
+  },
+
+  "linear": {
+    "gap_min": 2.0,
+    "keep_air": 0.5,
+    "head_pad": 0.3,
+    "tail_pad": 0.5,
+    "min_isolated": 1.5,
+    // Word fragments said before a silent demonstration (keep the gap), in the channel's language
+    "demo_cues": ["look", "here", "see", "there", "this"]
+  },
+
+  // Regular expressions for the dérushage pre-scan (each alternative starts at a word boundary)
+  "flags": {
+    "divisive": "politic|election|government|religion|war\b",
+    "youtube": "fuck|shit\b|drug|sex",
+    "interjection": "oh my god|jesus christ",
+    "retake": "sorry|let me start again|cut\b|action\b"
+  },
+
+  "thumbnail": {
+    // [regex, weight]: moments where the presenter shows something
+    "cues": [
+      ["most beautiful|my favourite|treasure|incredible", 3],
+      ["beautiful|gorgeous|here is|let me show you", 2],
+      ["look at|you can see|as you can see", 1]
+    ],
+    "show_delay": 1.5,
+    // Viewing LUT (.cube) for log footage, or null
+    "lut": null
+  },
+
+  "montage": {
+    "blooper_title": "Bloopers"
+  }
+}
