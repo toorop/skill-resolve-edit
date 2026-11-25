@@ -25,6 +25,19 @@
   converts plan frames with each rush's rate; dump/chapters/thumbnails stay in timeline frames. Verified to the
   frame by comparing an exported still with ffmpeg frames of the rush (PSNR 48 dB at the expected time, 25 dB one
   frame off).
+- **`MediaPoolItem.SetTranscription(dict)`** (Studio, 21.1.2+; measured on 21.2.0.6, 2026-11-25): the dict of
+  `GetTranscription()`, `{language, segments: [{start, end, text, speaker, words: [{text, start, end}]}]}`, with
+  SOURCE timecodes (clip `Start TC` + frames, e.g. Sony time of day `02:25:09:03`). Words carry a leading space
+  like Resolve's own; words may share a boundary frame (Resolve's own do), never overlap. Accents go through
+  correctly (no double encoding, unlike names; checked by eye in the Transcription window). Resolve adds its own
+  `(...)` silence words and segments; everything else reads back exactly as sent. Clip property
+  `Transcription Status` becomes "Transcribed". Unknown speakers ("Speaker 1") are enrolled. 31 rushes, 5 568 words:
+  0.2 s. A timeline's transcription cannot be set (it comes from its clips); right after, a reference timeline of
+  those clips still reads back empty with `GetTranscription(True)` on its media pool item. `split_transcript.py` +
+  `resolve/set_transcription.py` do it from the Scribe transcript.
+  For the user: there is no "Open" entry. On a clip that is already transcribed, Media Pool right-click >
+  **AI Tools > Audio Transcription > Transcribe** opens the Transcription window without transcribing again
+  (manual, chapter "Text Based Editing"); a transcribed clip shows a speech balloon on its thumbnail.
 - Timeline format: `project.SetSetting("timelineFrameRate"/"timelineResolutionWidth"/...)` works while the project
   has no timeline; afterwards a timeline gets its own size with `tl.SetSetting("useCustomSettings", "1")` then
   `timelineResolutionWidth/Height` (verified: a 1080p montage in a UHD project).

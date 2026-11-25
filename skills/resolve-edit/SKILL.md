@@ -68,7 +68,8 @@ see Step 9).
 <video folder>/            (= working directory; the profile pointer is here or in a parent folder)
   rushes/                  camera files, any cameras, any sub-folders (sidecars and proxies are skipped)
   audio/                   reference audio export + 16 kHz parts for transcription
-  transcripts/             rushes.json (inventory), clips.json, transcript.json (merged), transcript_lisible.txt, flags.txt
+  transcripts/             rushes.json (inventory), clips.json, transcript.json (merged), transcript_lisible.txt, flags.txt,
+                           resolve_transcription.json (per rush, for Resolve)
   edl/                     plans (linear_vN.json, montage_vN.json), final_dump.json
   publication/             youtube.md (copy-paste package)
   decisions.json           per-video decisions (start from the profile's example, else templates/decisions.example.json)
@@ -124,6 +125,17 @@ python SKILL/scripts/flag_passages.py transcripts/transcript.json transcripts/cl
 ```
 Language and keyterms come from the profile (`--language`, `--keyterm` override). Parts are split at rush
 boundaries under 20 min (fal limit). Details: `references/transcription.md`.
+
+**Then, with Resolve Studio 21.1.2 or later (free, no external service): put the transcript in Resolve**, one
+transcription per rush, so the user can search, read and edit by text in Resolve without transcribing again:
+```
+python SKILL/scripts/split_transcript.py transcripts/transcript.json transcripts/clips.json transcripts/resolve_transcription.json
+```
+then `resolve/set_transcription.py` with `transcription = <video folder>\transcripts\resolve_transcription.json`.
+It reads every rush back and lists any difference (`readback_mismatch` must be empty). A rush that already has a
+transcription is kept unless `overwrite: True` (ask the user). With the free Resolve, skip this step. Tell the
+user how to see it: Media Pool, right-click a rush > AI Tools > Audio Transcription > Transcribe (on a transcribed
+clip it only opens the Transcription window).
 
 ### Step 4 — Dérushage report (read `transcript_lisible.txt` + `flags.txt`)
 Present, with reference timecodes: failed takes and retakes, off-topic passages (passers-by, cameraman),

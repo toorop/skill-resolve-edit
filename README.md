@@ -213,6 +213,8 @@ sent to Scribe v2 (language and names to spell from your profile), and merged in
 aligned on the reference. Claude reads only the condensed `transcript_lisible.txt` (one sentence per line, with
 reference timecodes, grouped by rush), plus `flags.txt` (keyword pre-scan from your profile: divisive topics,
 swearing, repeated interjections, retakes).
+With **Resolve Studio** (21.1.2 or later), the transcript is also put into Resolve, one transcription per rush,
+for free: you can search, read and edit by text in Resolve without transcribing again.
 
 **Step 4 — Dérushage report.** Failed takes and retakes, off-topic passages, false starts, topics explained twice,
 passages your editorial policy flags, and the list of sequences (one per object or topic). Claude asks you, one
@@ -307,6 +309,7 @@ detects overlapping recordings and warns; you then keep one camera for that pass
     transcript.json            word-level transcript on the reference timeline (large: Claude never reads it)
     transcript_lisible.txt     readable transcript (one sentence per line, reference timecodes)
     flags.txt                  keyword pre-scan for the dérushage report
+    resolve_transcription.json the transcript cut per rush, for Resolve (Studio)
   decisions.json               YOUR decisions: removals, exceptions, montage sequences, bloopers (source of truth)
   edl/                         plans: linear_vN.json, montage_vN.json; final_dump.json (state of your FINAL)
   publication/
@@ -340,6 +343,7 @@ Local scripts (`skills/resolve-edit/scripts/`, Python stdlib + ffmpeg; they find
 | `transcribe_fal.py MANIFEST OUT.json` | Scribe v2 on fal.ai, parts merged on the reference timeline |
 | `readable_transcript.py TRANSCRIPT CLIPS OUT.txt` | condensed transcript to read |
 | `flag_passages.py TRANSCRIPT CLIPS` | keyword pre-scan (profile `flags`) |
+| `split_transcript.py TRANSCRIPT CLIPS OUT.json` | the transcript cut per rush, in each rush's frames, for `set_transcription.py` |
 | `build_linear_edl.py DECISIONS TRANSCRIPT CLIPS OUT.json` | linear cut plan |
 | `build_montage.py DECISIONS TRANSCRIPT CLIPS OUT.json` | montage plan (sequences, title, bloopers, markers) |
 | `chapters.py MONTAGE_PLAN FINAL_DUMP` | YouTube chapters from your FINAL |
@@ -348,7 +352,8 @@ Local scripts (`skills/resolve-edit/scripts/`, Python stdlib + ffmpeg; they find
 
 Resolve-side scripts (`scripts/resolve/`), run by Claude through the MCP tool `run_script_unsafe`
 (`ARGS = {...}; exec(open(...).read())`, 60 s per call): `import_reference.py`, `render_audio.py`,
-`build_timeline.py` (also `width`/`height` for a montage in another size), `dump_timeline.py`.
+`build_timeline.py` (also `width`/`height` for a montage in another size), `dump_timeline.py`,
+`set_transcription.py` (Studio: one transcription per rush, read back and checked).
 
 ## Troubleshooting
 
