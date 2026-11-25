@@ -32,7 +32,8 @@
   correctly (no double encoding, unlike names; checked by eye in the Transcription window). Resolve adds its own
   `(...)` silence words and segments; everything else reads back exactly as sent. Clip property
   `Transcription Status` becomes "Transcribed". Unknown speakers ("Speaker 1") are enrolled. 31 rushes, 5 568 words:
-  0.2 s. A timeline's transcription cannot be set (it comes from its clips); right after, a reference timeline of
+  0.2 s. Mixed rates verified the same day: DJI 50p rushes in a 25p reference, timecodes counted at 50 (frames 00-49,
+  e.g. `15:43:50:45`), read back identical, words on the speech by ear. A timeline's transcription cannot be set (it comes from its clips); right after, a reference timeline of
   those clips still reads back empty with `GetTranscription(True)` on its media pool item. `split_transcript.py` +
   `resolve/set_transcription.py` do it from the Scribe transcript.
   For the user: there is no "Open" entry. On a clip that is already transcribed, Media Pool right-click >
