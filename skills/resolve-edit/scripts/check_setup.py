@@ -1,9 +1,9 @@
 """Step 0: check that this computer has what the skill needs, and say how to install what is missing.
 
-Checks Python, ffmpeg / ffprobe (with the features the scripts use: soxr resampling, lut3d, drawtext, tile), the
-fal.ai key (only its presence and length, never its value), HTTPS access to fal.ai, the channel profile and its
-settings (cameras, LUT and font files). DaVinci Resolve itself is checked by Claude through the MCP
-(get_resolve_status), not here.
+Checks Python, ffmpeg / ffprobe (with the soxr resampler used to prepare the audio), the fal.ai key (only its
+presence and length, never its value), HTTPS access to fal.ai, the channel profile and its settings (cameras).
+DaVinci Resolve itself is checked by Claude through the MCP (get_resolve_status), not here. Images (contact sheets,
+thumbnails) are rendered by Resolve, not by ffmpeg.
 
 Usage: python check_setup.py [--profile DIR] [--offline]
 Exit code 0 when nothing is missing (warnings allowed), 1 otherwise.
@@ -71,12 +71,6 @@ def check_ffmpeg():
             return
         first = (run([tool, "-version"]).stdout.splitlines() or ["?"])[0].split(" Copyright")[0]
         ok(tool, f"{first} ({path})")
-    filters = run(["ffmpeg", "-hide_banner", "-filters"]).stdout
-    missing = [f for f in ("lut3d", "drawtext", "tile", "aresample") if f" {f} " not in filters]
-    if missing:
-        fail("ffmpeg filters", f"missing {', '.join(missing)}: install a full build", "ffmpeg")
-    else:
-        ok("ffmpeg filters", "lut3d, drawtext, tile, aresample")
     soxr = run(["ffmpeg", "-hide_banner", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=48000", "-t", "0.1",
                 "-af", "aresample=16000:resampler=soxr", "-f", "null", "-"])
     if soxr.returncode:
@@ -134,14 +128,7 @@ def check_profile(profile):
         return
     cams = camera_rules(settings)
     ok("cameras", ", ".join(c["name"] for c in cams) if cams else "none described (rushes still work: names from "
-       "their metadata, file-name short names, no viewing LUT)")
-    luts = [(c["name"], c.get("lut")) for c in cams] + [("thumbnail.lut", (settings.get("thumbnail") or {}).get("lut"))]
-    for name, lut in luts:
-        if lut and not os.path.isfile(lut):
-            warn(f"LUT of {name}", f"file not found: {lut}")
-    font = (settings.get("thumbnail") or {}).get("font")
-    if font and not os.path.isfile(font):
-        warn("thumbnail.font", f"file not found: {font}")
+       "their metadata, file-name short names)")
     for k in ("flags", "thumbnail"):
         if not settings.get(k):
             warn(f"settings.json {k}", "empty: the matching step will stop and say so")

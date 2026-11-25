@@ -12,7 +12,7 @@ Replace every <...>; delete what does not apply. Format: `references/profile.md`
 
 ## Shooting
 - Camera(s), resolution, fps, log profile: <...> (does the user grade the footage themselves?) — each camera also
-  gets an entry in `settings.json` → `cameras` (how to recognise it, short names, viewing LUT, clock offset)
+  gets an entry in `settings.json` → `cameras` (how to recognise it, short names, clock offset)
 - Several cameras in one video: <one after the other / never> (filming at the same time is not handled yet)
 - Which sound to use: <the sound inside the video files; which microphone it comes from; files to ignore, e.g. a
   camera's backup .WAV>

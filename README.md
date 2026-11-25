@@ -69,8 +69,8 @@ new timeline built from the rushes; the reference timeline and your FINAL are ne
   only), with its MCP server connected to Claude. Tested on 21.2.
 - **Claude Code** (desktop app or CLI).
 - **Python 3.8 or later** (standard library only: nothing to `pip install`).
-- **ffmpeg and ffprobe** in the PATH, a full build (the scripts use the soxr resampler and the lut3d, drawtext and
-  tile filters).
+- **ffmpeg and ffprobe** in the PATH, a full build (the scripts use the soxr resampler to prepare the audio;
+  images are rendered by Resolve).
 - A **fal.ai** account and API key (pay per use, about $0.008 per audio minute for the transcript).
 - **Windows 10 or 11**: the only system the skill has been tested on so far (see [macOS and Linux](#macos-and-linux)).
 - **Camera clocks set right** when you film with several cameras: the reference timeline is sorted by recording
@@ -84,7 +84,7 @@ winget install Python.Python.3.13
 winget install Gyan.FFmpeg
 winget install Git.Git
 ```
-`Gyan.FFmpeg` is the full build (soxr, lut3d, drawtext included). **Close and reopen the terminal and Claude Code
+`Gyan.FFmpeg` is the full build (soxr included). **Close and reopen the terminal and Claude Code
 afterwards**: programs already running don't see the new PATH. Check with `python --version` and `ffmpeg -version`.
 
 | | Windows | macOS ([Homebrew](https://brew.sh)) | Linux (Debian / Ubuntu) |
@@ -98,7 +98,7 @@ Then check the whole setup, from a video folder (or anywhere, with `--profile`):
 python skills\resolve-edit\scripts\check_setup.py
 ```
 It checks Python, ffmpeg and ffprobe and their needed features, the fal.ai key (only whether it is there and its
-length), HTTPS access to fal.ai, the channel profile and its LUT files, and prints the install command of anything
+length), HTTPS access to fal.ai, the channel profile, and prints the install command of anything
 missing for your system. Claude runs it at Step 0 of every video. DaVinci Resolve is checked by Claude through
 the MCP.
 
@@ -132,10 +132,6 @@ MCP, which DaVinci Resolve Studio has on all three systems), but expect rough ed
 - **fal.ai key**: the Windows Credential Manager does not exist there. Set `FAL_KEY` in the environment of the
   terminal that starts Claude Code (`fal_key.py check` then finds it). Keep it out of shared shell files if you
   can, e.g. load it from your system keychain in that terminal only.
-- **Contact sheet font**: Arial (macOS) or DejaVu Sans / Liberation Sans (Linux) are found automatically; else set
-  `thumbnail.font` in the profile.
-- **Paths in the profile** (viewing LUTs) are per computer: point them to your Resolve LUT folder (macOS:
-  `/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/`; Linux: `/opt/resolve/LUT/`).
 - Please report what breaks (issues welcome).
 
 ## First use: set up your channel profile
@@ -222,7 +218,9 @@ question at a time, what to remove, and records your decisions in `decisions.jso
 
 **Step 5 — Linear cut** (`01 - LINEAIRE v1`), shooting order kept: validated removals, silences longer than 2 s
 shortened to about 1 s (unless the words before announce a silent demonstration), rush heads and tails trimmed
-around the speech, isolated slivers dropped. Thresholds in your profile. You spot-check with the markers
+around the speech, isolated slivers dropped. Thresholds in your profile. Claude then looks at a contact sheet of
+every cut (last frame before, first frame after) and tells you what looks wrong; it never removes anything because
+of an image. You spot-check with the markers
 (Shift+Up/Down in Resolve). Corrections go into `decisions.json` and give `v2`, never a hand-edited timeline.
 
 **Step 6 — Montage proposal.** The sequences re-ordered for retention (stake stated early, alternate topics,
@@ -232,12 +230,12 @@ style and video type, as a table with durations. Nothing is built before you val
 **Step 7 — Montage** (`02 - MONTAGE v1`). Claude proposes its format first (same rate as the reference; the size
 can be larger, e.g. UHD). Built from the clean linear material: title card and bloopers at the end if you want
 them, 4-frame audio cross fades at every cut, YouTube loudness normalisation (one relative gain), review markers,
-then a full verification (every piece: right rush, right source frame, video and audio aligned, no gap). Claude
-then offers to duplicate it as `03 - FINAL` for your manual pass.
+then a full verification (every piece: right rush, right source frame, video and audio aligned, no gap) and the
+same contact sheet of the cuts. Claude then offers to duplicate it as `03 - FINAL` for your manual pass.
 
 **Step 8 — Publication package**, from the real state of your FINAL (your manual changes included): title
 proposals, thumbnail texts, a contact sheet of ~20 thumbnail candidates for you to pick from (frames where the
-presenter shows something, through each camera's viewing LUT), full-size exports of your picks, description with
+presenter shows something, rendered by Resolve from your FINAL), full-size exports of your picks, description with
 YouTube chapters (first at 00:00, at least 3, at least 10 s each) and your fixed footer, tags. All in
 `publication/youtube.md`, ready to copy and paste.
 
@@ -265,11 +263,11 @@ code: what depends on a camera is in your profile.
   only need to be unique.
 - **Short names** (used in reports and in `decisions.json`): from a pattern per camera in your profile (e.g.
   `C0522` for a Sony, `DJI0030` for a DJI), else the file name without extension.
-- **Viewing LUT per camera** for the thumbnail contact sheet (e.g. S-Log3 → Rec.709, HLG → Rec.709). Grading
-  remains yours: the skill never touches color in Resolve.
+- **Colour**: grading remains yours, the skill never touches colour in Resolve. Images Claude looks at come from
+  Resolve as the timeline shows them; ungraded log / HLG footage is flat but readable, enough to see what happens.
 - **Sound**: always the sound inside the video files. Separate audio files are never imported (e.g. the backup
   `.WAV` an action camera writes next to each clip).
-- **Unknown camera**: it still works (named after its metadata, file-name short names, no LUT); Claude offers to
+- **Unknown camera**: it still works (named after its metadata, file-name short names); Claude offers to
   add it to your profile.
 
 Describe each camera in `settings.json`:
@@ -279,14 +277,12 @@ Describe each camera in `settings.json`:
     "name": "Sony A6700",
     "match": "XAVC",                         // regex searched in the file path and metadata (encoder, make, model...)
     "short_name": "C\\d{4}",                 // groups joined, else the whole match -> C0522
-    "lut": "C:\\ProgramData\\Blackmagic Design\\DaVinci Resolve\\Support\\LUT\\Sony\\SLog3SGamut3.CineToLC-709.cube",
     "clock_offset": 0                         // seconds added to its recording times
   },
   {
     "name": "DJI Osmo Action 5 Pro",
     "match": "DJI ?Osmo ?Action ?5",
     "short_name": "(DJI)_\\d{14}_(\\d{4})",  // DJI_20261109153839_0030_D.MP4 -> DJI0030
-    "lut": "C:\\ProgramData\\Blackmagic Design\\DaVinci Resolve\\Support\\LUT\\DJI\\DLOG_LUTs\\HLG_to_REC709.cube",
     "clock_offset": 0
   }
 ]
@@ -347,13 +343,14 @@ Local scripts (`skills/resolve-edit/scripts/`, Python stdlib + ffmpeg; they find
 | `build_linear_edl.py DECISIONS TRANSCRIPT CLIPS OUT.json` | linear cut plan |
 | `build_montage.py DECISIONS TRANSCRIPT CLIPS OUT.json` | montage plan (sequences, title, bloopers, markers) |
 | `chapters.py MONTAGE_PLAN FINAL_DUMP` | YouTube chapters from your FINAL |
-| `thumbnail_candidates.py TRANSCRIPT CLIPS FINAL_DUMP RUSHES OUT_DIR` | contact sheet of thumbnail candidates; `--export 1,7` full size |
+| `thumbnail_candidates.py TRANSCRIPT CLIPS FINAL_DUMP OUT_DIR` | thumbnail candidates and the frames to render (`--export 1,7`: your picks) |
 | `fal_key.py set / check / delete` | the fal.ai key in the Windows Credential Manager |
 
 Resolve-side scripts (`scripts/resolve/`), run by Claude through the MCP tool `run_script_unsafe`
 (`ARGS = {...}; exec(open(...).read())`, 60 s per call): `import_reference.py`, `render_audio.py`,
 `build_timeline.py` (also `width`/`height` for a montage in another size), `dump_timeline.py`,
-`set_transcription.py` (Studio: one transcription per rush, read back and checked).
+`set_transcription.py` (Studio: one transcription per rush, read back and checked), `export_frames.py` (contact
+sheets and frames rendered by Resolve: silent moments, cut checks, thumbnail candidates).
 
 ## Troubleshooting
 

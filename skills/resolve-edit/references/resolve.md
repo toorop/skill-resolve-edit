@@ -61,7 +61,15 @@
   resolve.NORMALIZE_AUDIO_SET_LEVEL_RELATIVE})`; modes via `GetNormalizeAudioModes()`.
 - `MediaPool.MoveClips([timeline_media_pool_item], bin)` moves timelines into the "Timelines" bin.
 - `Timeline.DuplicateTimeline(name)` → copy with markers/transitions/volumes.
-- `project.ExportCurrentFrameAsStill(path)` (run_script_unsafe) → look at frames (title check, silent passages).
+- **Images: `ExportFrame` / `ExportThumbnails`** (21.2; measured 2026-11-25 on DJI 50p HLG + Sony 25p S-Log3,
+  PSNR against ffmpeg frames). `MediaPoolItem`: the SOURCE image, ungraded (a timeline item's LUT is ignored),
+  offset in the rush's own frames. `TimelineItem` and `Timeline`: the image the timeline SHOWS (clip grade, group
+  pre-clip grade, Fusion titles), offset in TIMELINE frames (from the item / timeline start). Right frame every
+  time (45-47 dB, ~30 for the next frame). A LUT applied by Resolve = the same LUT through ffmpeg lut3d (45-47 dB).
+  One frame 0.1-0.4 s; `ExportThumbnails` 20 labelled frames 2.3 s (Resolve picks the grid, e.g. 3 x 7); accents in
+  labels are fine. Options: `outputType "file"`, `filePath`, `maxDimension` (whole sheet), `quality` (JPEG).
+  `resolve/export_frames.py` wraps them (sheets, single frames, cut sheets). `project.ExportCurrentFrameAsStill`
+  (playhead-based) is no longer needed.
 - Markers: `timeline.AddMarker(frame, color, name, note, duration)`; colors: Blue, Cyan, Green, Yellow, Red, Pink,
   Purple, Fuchsia, Rose, Lavender, Sky, Mint, Lemon, Sand, Cocoa, Cream.
 - Deleting a timeline: `MediaPool.DeleteTimelines([tl])` (only your own test timelines, never user work).

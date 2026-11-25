@@ -27,7 +27,7 @@ publication rules, description footer, audio finishing chain, a `decisions.json`
 Layering for the linear cut: skill defaults < profile `linear` < the video's `decisions.json` `linear`.
 ```
 language                 transcription language code ("fr"); omitted = Scribe detects it
-cameras                  [{name, match, short_name, lut, clock_offset}, ...] one entry per camera (below)
+cameras                  [{name, match, short_name, clock_offset}, ...] one entry per camera (below)
 rushes.ignore            regexes on the path inside the rushes folder of files to skip (e.g. "(^|/)SUB/" for proxies
                          copied with a whole card); hidden files and sidecars (.XML, .LRF, .WAV, .THM...) are always
                          skipped: only video files are read
@@ -41,8 +41,6 @@ linear.demo_cues         word fragments before a long gap that mean "silent demo
 flags.<category>         regex alternatives for flag_passages.py (e.g. divisive, youtube, interjection, retake)
 thumbnail.cues           [[regex, weight], ...] moments where the presenter shows something
 thumbnail.show_delay     seconds after the cue (default 1.5)
-thumbnail.lut            viewing LUT for rushes of a camera that has no "lut" of its own, or null
-thumbnail.font           font for the contact sheet labels (default Arial)
 montage.blooper_title    title card text before the bloopers (default "Bloopers")
 ```
 Without `flags` or `thumbnail.cues`, those scripts stop and say so: the lists are language- and channel-specific.
@@ -56,11 +54,13 @@ match         regex searched in the file's path and in its metadata (encoder, ma
 short_name    regex giving the rush short name used in reports and decisions.json: its groups joined, else the
               whole match (in JSON: "C\\d{4}" -> C0522; "(DJI)_\\d{14}_(\\d{4})" -> DJI0030). Default: the file
               name without extension. Short names must be unique (the inventory falls back to file names if not).
-lut           viewing LUT (.cube) of this camera's log / HLG footage for the thumbnail contact sheet; null = none
 clock_offset  seconds added to this camera's recording times when its clock is wrong (default 0)
 ```
 The `signature` field of `transcripts/rushes.json` shows the metadata each file was matched on: use it to write
-`match` for a new camera. Unknown cameras still work (named after their metadata, file-name short names, no LUT).
+`match` for a new camera. Unknown cameras still work (named after their metadata, file-name short names).
+Colour is never handled by the skill: images come from Resolve (a timeline shows its grade, a rush its
+ungraded source, flat but readable for log / HLG). Old profiles may still have `lut` / `thumbnail.lut` /
+`thumbnail.font` keys: they are ignored.
 Which sound to use is a camera fact too: the skill always uses the sound inside the video file and never imports
 separate audio files. Write in `profile.md` which microphone that sound comes from (e.g. a DJI action camera also
 writes a `.WAV` of its built-in microphone next to each MP4: a backup, not the presenter's microphone).

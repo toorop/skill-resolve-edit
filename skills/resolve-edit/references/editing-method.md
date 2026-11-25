@@ -30,7 +30,7 @@
 
 ## Image: flattering framing and J-cuts
 At rush heads (getting out of a car, bending over, sitting down) the presenter can be badly framed. Check with
-stills (`ExportCurrentFrameAsStill`) and PROPOSE a J-cut (voice of the talking shot laid under the previous shot,
+the cut sheets (`resolve/export_frames.py`, `mode = "cuts"`) and PROPOSE a J-cut (voice of the talking shot laid under the previous shot,
 video on V2) rather than cutting words. `build_timeline.py` doesn't build J-cuts yet: describe it and let the
 user do it.
 

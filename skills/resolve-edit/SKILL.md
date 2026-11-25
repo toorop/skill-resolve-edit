@@ -77,11 +77,18 @@ see Step 9).
 
 ## Workflow
 
+### Looking at images (any step)
+All images come from Resolve: `resolve/export_frames.py` renders labelled contact sheets (20 frames ≈ 2 s) or
+single frames, from a timeline (what it shows: grade, titles, sizing) or from a rush (its ungraded source).
+Frames are given as frame numbers from the timeline start or as `{"tc": "HH:MM:SS:FF", "label": ...}`. The skill
+never touches colour: ungraded log / HLG footage is flat but readable, enough to see what happens. Look at one
+small sheet at a time; never sweep every rush by default.
+
 ### Step 0 — Check the setup and load the profile
 - Find and read the channel profile: `profile.md` entirely, then the files it says to read at this step.
 - `get_resolve_status` on the Resolve MCP; confirm the open project with the user.
 - `python SKILL/scripts/check_setup.py` (from the video folder): Python, ffmpeg / ffprobe and the features the
-  scripts need, the fal.ai key (presence and length only), HTTPS access to fal.ai, the profile and its LUT files.
+  scripts need, the fal.ai key (presence and length only), HTTPS access to fal.ai, the profile.
   For each missing tool it prints the install command for this system (winget / brew / apt): give it to the user
   and ask them to install it, then to restart Claude Code (a running session does not see a new PATH). If `python`
   itself is missing, the same commands are in the README. If the key is missing, ask the user to run
@@ -142,14 +149,20 @@ Present, with reference timecodes: failed takes and retakes, off-topic passages 
 false starts, topics explained twice, passages the profile's editorial policy asks to flag, repeated
 interjections, and the list of sequences (one per object/topic). Then ask the user, ONE question at a time, what
 to remove. Silent visual moments (arrivals, demonstrations) are invisible in the transcript: when in doubt,
-export stills (`project.ExportCurrentFrameAsStill`) and look, or ask. Record validated removals in
+look at a small contact sheet of the reference at those timecodes (`resolve/export_frames.py`, below), or ask.
+Record validated removals in
 `decisions.json` → `linear.remove`.
 
 ### Step 5 — Linear cut
 `python SKILL/scripts/build_linear_edl.py decisions.json transcripts/transcript.json transcripts/clips.json edl/linear_v1.json`
 then `resolve/build_timeline.py` with `plan = edl/linear_v1.json`, `name = "01 - LINEAIRE v1"`.
-Report pieces, duration, what was removed, and the markers legend. The user spot-checks via markers
-(Shift+Up/Down). Corrections → update `decisions.json` → new version (never edit a built timeline).
+Then check the cuts by eye: `resolve/export_frames.py` with `timeline = "01 - LINEAIRE v1"`, `mode = "cuts"`,
+`out_dir = <video folder>\edl\cuts_linear_v1`, `clips_json = <video folder>\transcripts\clips.json` → sheets of the
+last frame before / first frame after every cut, labelled with the rush short names. Look at them and REPORT what
+looks wrong (black or blurred frame, badly framed presenter at a rush head, camera still moving): never remove
+anything because of an image, and never because a passage has no speech.
+Report pieces, duration, what was removed, what the cut sheets show, and the markers legend. The user
+spot-checks via markers (Shift+Up/Down). Corrections → update `decisions.json` → new version (never edit a built timeline).
 Rules and thresholds: `references/editing-method.md` + the profile's style and `settings.json` → `linear`.
 
 ### Step 6 — Montage proposal (propose BEFORE building; the user will watch it entirely)
@@ -166,14 +179,16 @@ largest size of the rushes used (e.g. UHD), or what the user prefers. Pass `widt
 `build_timeline.py` when it differs from the reference.
 `build_montage.py` → `resolve/build_timeline.py` (`name = "02 - MONTAGE v1"`). It adds the title card,
 bloopers, audio cross fades (4 frames), YouTube loudness normalization (relative) and markers, and verifies
-everything. Then offer to duplicate it as `"03 - FINAL"` (`timeline.DuplicateTimeline`) for the user's manual
+everything. Check its cuts the same way (`mode = "cuts"`, `out_dir = <video folder>\edl\cuts_montage_v1`, same
+`clips_json`). Then offer to duplicate it as `"03 - FINAL"` (`timeline.DuplicateTimeline`) for the user's manual
 pass, and remind them of their audio finishing chain if the profile documents one.
 
 ### Step 8 — Publication package
 After the user's manual pass: `resolve/dump_timeline.py` on "03 - FINAL" → `chapters.py` (works on all tracks,
 ignores bloopers) → write `publication/youtube.md` per `references/publication.md` and the profile's publication
-rules: title proposals, thumbnail text + image candidates (`thumbnail_candidates.py`: one contact sheet the USER
-looks at and picks from — don't view it yourself), full description with rewritten chapter titles and the
+rules: title proposals, thumbnail text + image candidates (`thumbnail_candidates.py` then
+`resolve/export_frames.py` on "03 - FINAL": one contact sheet the USER looks at and picks from — don't view it
+yourself), full description with rewritten chapter titles and the
 profile's fixed footer, tags.
 
 ### Step 9 — Lessons learned and video note (end of every video)
