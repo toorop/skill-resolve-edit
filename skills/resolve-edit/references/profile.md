@@ -71,7 +71,9 @@ One folder per video (e.g. `<date of shooting> <title>`), holding the pre-shoot 
 `youtube.md`), YouTube link, timelines of the Resolve project, what the user changed by hand in FINAL and why,
 lessons and where they were written (profile or skill), and the path of the working folder. Archive next to it
 the small files worth keeping once the work drive is wiped: `decisions.json`, `transcript_lisible.txt`,
-`publication/youtube.md`, the montage plan and `final_dump.json` (tens of KB, never media or raw transcripts).
+`publication/youtube.md`, the montage plan, `final_dump.json` and the whole `history/` folder (proposals, validated
+decisions, FINAL changes, comparison: the data set to compare models later). Tens of KB, never media or raw
+transcripts.
 
 ## Creating a profile with the user
 Ask one question at a time, with a recommendation each time. In this order:

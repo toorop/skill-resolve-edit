@@ -240,8 +240,10 @@ presenter shows something, rendered by Resolve from your FINAL), full-size expor
 YouTube chapters (first at 00:00, at least 3, at least 10 s each) and your fixed footer, tags. All in
 `publication/youtube.md`, ready to copy and paste.
 
-**Step 9 — Lessons learned.** Claude asks what you changed by hand in FINAL and why: channel lessons go into your
-profile, generic lessons into the skill. If your profile names a notes folder, Claude writes a note for the video
+**Step 9 — Lessons learned.** Claude computes what you changed by hand between the montage and your FINAL
+(passages removed or added, sequences moved, shots on V2) and only asks you why: channel lessons go into your
+profile, generic lessons into the skill. Claude also compares what it proposed (dérushage, montage order) with
+what you validated. If your profile names a notes folder, Claude writes a note for the video
 there (the work drive is often wiped once a video is out).
 
 ## Several cameras, any camera
@@ -312,6 +314,9 @@ detects overlapping recordings and warns; you then keep one camera for that pass
   publication/
     youtube.md                 the copy-paste package
     vignettes/                 contact sheet, candidates.json, full-size exports
+  history/                     what Claude proposed (as shown, before your answers) and what you validated, the
+                               changes you made in FINAL, a comparison, meta.json (dates, model): small, private,
+                               worth archiving; the material to compare models later
 ```
 Example of `decisions.json`: [`templates/decisions.example.json`](skills/resolve-edit/templates/decisions.example.json).
 Times are reference-timeline seconds or `HH:MM:SS:FF` timecodes.
@@ -344,6 +349,8 @@ Local scripts (`skills/resolve-edit/scripts/`, Python stdlib + ffmpeg; they find
 | `build_linear_edl.py DECISIONS TRANSCRIPT CLIPS OUT.json` | linear cut plan |
 | `build_montage.py DECISIONS TRANSCRIPT CLIPS OUT.json` | montage plan (sequences, title, bloopers, markers) |
 | `chapters.py MONTAGE_PLAN FINAL_DUMP` | YouTube chapters from your FINAL |
+| `final_changes.py MONTAGE_PLAN FINAL_DUMP OUT_PREFIX` | what you changed by hand between the montage and FINAL |
+| `history.py save KIND FILE` / `history.py compare` | keeps proposals and validations in `history/`, compares them |
 | `thumbnail_candidates.py TRANSCRIPT CLIPS FINAL_DUMP OUT_DIR` | thumbnail candidates and the frames to render (`--export 1,7`: your picks) |
 | `fal_key.py set / check / delete` | the fal.ai key in the Windows Credential Manager |
 

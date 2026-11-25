@@ -72,10 +72,21 @@ see Step 9).
                            resolve_transcription.json (per rush, for Resolve)
   edl/                     plans (linear_vN.json, montage_vN.json), final_dump.json
   publication/             youtube.md (copy-paste package)
+  history/                 what you proposed and what the user validated (history.py), FINAL changes, meta.json
   decisions.json           per-video decisions (start from the profile's example, else templates/decisions.example.json)
 ```
 
 ## Workflow
+
+### Keeping the history (every video)
+What you propose and what the user decides is kept in `history/` (the future data set to compare models; it never
+changes the edit). Run from the video folder, `--model` = your model id:
+`python SKILL/scripts/history.py save <kind> <file> --model <id>`. Save each proposal EXACTLY as presented, BEFORE
+the user answers; write the file in the scratchpad or `history/` first. Kinds: `derushage_proposal` (Step 4: the
+report .md, and a .json in the decisions.json format with a `reason` per removal), `decisions_linear` and
+`decisions_montage` (decisions.json at each build), `montage_proposal` (Step 6: .md table + .json),
+`publication_proposal` (Step 8: the youtube.md as first proposed), `published` (Step 9).
+
 
 ### Looking at images (any step)
 All images come from Resolve: `resolve/export_frames.py` renders labelled contact sheets (20 frames ≈ 2 s) or
@@ -150,13 +161,14 @@ false starts, topics explained twice, passages the profile's editorial policy as
 interjections, and the list of sequences (one per object/topic). Then ask the user, ONE question at a time, what
 to remove. Silent visual moments (arrivals, demonstrations) are invisible in the transcript: when in doubt,
 look at a small contact sheet of the reference at those timecodes (`resolve/export_frames.py`, below), or ask.
-Record validated removals in
-`decisions.json` → `linear.remove`.
+Before the first question, save the report: `history.py save derushage_proposal` with the .md as shown and the
+.json of the proposed removals (`{"linear": {"remove": [{"label", "start", "end", "reason"}]}}`).
+Record validated removals in `decisions.json` → `linear.remove`.
 
 ### Step 5 — Linear cut
 `python SKILL/scripts/build_linear_edl.py decisions.json transcripts/transcript.json transcripts/clips.json edl/linear_v1.json`
-then `resolve/build_timeline.py` with `plan = edl/linear_v1.json`, `name = "01 - LINEAIRE v1"`.
-Then check the cuts by eye: `resolve/export_frames.py` with `timeline = "01 - LINEAIRE v1"`, `mode = "cuts"`,
+then `resolve/build_timeline.py` with `plan = edl/linear_v1.json`, `name = "01 - LINEAIRE v1"`, and
+`history.py save decisions_linear decisions.json` (each version). Then check the cuts by eye: `resolve/export_frames.py` with `timeline = "01 - LINEAIRE v1"`, `mode = "cuts"`,
 `out_dir = <video folder>\edl\cuts_linear_v1`, `clips_json = <video folder>\transcripts\clips.json` → sheets of the
 last frame before / first frame after every cut, labelled with the rush short names. Look at them and REPORT what
 looks wrong (black or blurred frame, badly framed presenter at a rush head, camera still moving): never remove
@@ -170,14 +182,16 @@ From the sequences, propose an order following `references/editing-method.md` an
 early, alternate topics, reconnect material shot at different times, the presenter's own structural phrases at
 the right place, crescendo to the best pieces, outro last, optional bloopers with a title). Watch for sentences
 that continue across rushes (keep those rushes adjacent). Respect the video type (some keep the shooting order).
-Present it as a table with approximate durations; validate; write `decisions.json` → `montage.sequences` /
-`bloopers`.
+Present it as a table with approximate durations and save it (`history.py save montage_proposal`, the .md table
+and a .json `{"montage": {"sequences": [...], "bloopers": [...]}}`) before the user answers; validate; write
+`decisions.json` → `montage.sequences` / `bloopers`.
 
 ### Step 7 — Build the montage
 Before building, propose the montage timeline format: same rate as the reference (always); size by default the
 largest size of the rushes used (e.g. UHD), or what the user prefers. Pass `width`/`height` to
 `build_timeline.py` when it differs from the reference.
-`build_montage.py` → `resolve/build_timeline.py` (`name = "02 - MONTAGE v1"`). It adds the title card,
+`build_montage.py` → `resolve/build_timeline.py` (`name = "02 - MONTAGE v1"`), then
+`history.py save decisions_montage decisions.json`. It adds the title card,
 bloopers, audio cross fades (4 frames), YouTube loudness normalization (relative) and markers, and verifies
 everything. Check its cuts the same way (`mode = "cuts"`, `out_dir = <video folder>\edl\cuts_montage_v1`, same
 `clips_json`). Then offer to duplicate it as `"03 - FINAL"` (`timeline.DuplicateTimeline`) for the user's manual
@@ -189,17 +203,22 @@ ignores bloopers) → write `publication/youtube.md` per `references/publication
 rules: title proposals, thumbnail text + image candidates (`thumbnail_candidates.py` then
 `resolve/export_frames.py` on "03 - FINAL": one contact sheet the USER looks at and picks from — don't view it
 yourself), full description with rewritten chapter titles and the
-profile's fixed footer, tags.
+profile's fixed footer, tags. Save the package as first proposed: `history.py save publication_proposal
+publication/youtube.md`.
 
 ### Step 9 — Lessons learned and video note (end of every video)
-- Ask the user what they changed by hand in "03 - FINAL" and why (diff it against "02 - MONTAGE" with
-  dump_timeline.py).
+- What changed by hand, from facts: `python SKILL/scripts/final_changes.py edl/montage_v1.json edl/final_dump.json
+  history/09_final_changes --clips transcripts/clips.json` (the montage plan actually built vs the FINAL dumped at
+  Step 8: passages removed or added, sequences moved, shots on V2, other items). Show it and ask the user only WHY.
+- Ask what was really published (title, thumbnail text, link) and save it: `history.py save published <file>`.
+  Then `python SKILL/scripts/history.py compare` → `history/comparison.md` (your proposals vs the validated
+  decisions); mention what the user changed most, it feeds the lessons.
 - **Channel lessons** (style, editorial line, video type, publication) → update the profile's files.
 - **Generic lessons** (Resolve API, scripts, method) → this skill's source repo, as `profile.md` says (reinstall,
   update the project status, commit and push).
 - If `profile.md` names a notes folder, write the video note there (format in `references/profile.md`): what
-  was published, what was changed by hand and why, lessons, and the small files worth archiving — the work drive
-  is often wiped once a video is out.
+  was published, what was changed by hand and why, lessons, and the small files worth archiving (`decisions.json`,
+  `history/`, `publication/`) — the work drive is often wiped once a video is out.
 
 ## References
 - `references/profile.md` — channel profile format, settings keys, per-video note, how to create a profile
