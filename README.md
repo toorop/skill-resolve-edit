@@ -402,8 +402,8 @@ data (an English channel profile, made-up transcripts, tiny videos and sounds ge
 need ffmpeg are skipped without it. They cover the offline scripts: timecodes and frame rates (25, 50, 23.976,
 29.97), the reference map, short names and profile lookup, the linear cut rules (gaps, removals, rush heads and
 tails, isolated slivers, a sentence cut between two rushes), the montage, YouTube chapters, thumbnail candidates,
-the keyword scan and readable transcript, the transcript cut per rush for Resolve, the rush inventory and the audio
-preparation. The scripts that run inside Resolve are tested by hand in a throwaway project.
+the keyword scan and readable transcript, the transcript cut per rush for Resolve, the rush inventory, the audio
+preparation, the history of proposals and validations, and the changes made by hand in FINAL. The scripts that run inside Resolve are tested by hand in a throwaway project.
 
 ## Repository layout
 
