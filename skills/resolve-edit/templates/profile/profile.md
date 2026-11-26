@@ -23,8 +23,9 @@ Replace every <...>; delete what does not apply. Format: `references/profile.md`
 - <audio interface that freezes, full drives, ...>
 - One Resolve project per video, named like its folder: <yes/no>
 
-## Where the skill comes from (for Step 9 generic lessons)
-- Repo: <path or URL of your copy of skill-resolve-edit>, reinstall with `install.ps1`.
+## Skill development (ONLY if you develop the skill yourself; otherwise delete this section)
+- Repo: <path or URL of your copy of skill-resolve-edit>, reinstall with `install.ps1`. With this section, Step 9
+  also proposes improvements to the skill (Resolve API, scripts, method); without it, it never does.
 
 ## Per-video notes (Step 9, optional)
 - Folder: <path of your notes folder, one sub-folder per video>, or "none".

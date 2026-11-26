@@ -221,8 +221,9 @@ publication/youtube.md`.
   Then `python SKILL/scripts/history.py compare` → `history/comparison.md` (your proposals vs the validated
   decisions); mention what the user changed most, it feeds the lessons.
 - **Channel lessons** (style, editorial line, video type, publication) → update the profile's files.
-- **Generic lessons** (Resolve API, scripts, method) → this skill's source repo, as `profile.md` says (reinstall,
-  update the project status, commit and push).
+- **Generic lessons** (Resolve API, scripts, method): **only if `profile.md` says the user develops this skill**
+  (a "skill development" section naming its source repo) → that repo, as `profile.md` says. Otherwise never
+  propose improvements to the skill itself: the user edits videos, not the skill.
 - If `profile.md` names a notes folder, write the video note there (format in `references/profile.md`): what
   was published, what was changed by hand and why, lessons, and the small files worth archiving (`decisions.json`,
   `history/`, `publication/`) — the work drive is often wiped once a video is out.

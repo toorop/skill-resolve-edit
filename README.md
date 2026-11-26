@@ -241,7 +241,7 @@ YouTube chapters (first at 00:00, at least 3, at least 10 s each) and your fixed
 
 **Step 9 — Lessons learned.** Claude computes what you changed by hand between the montage and your FINAL
 (passages removed or added, sequences moved, shots on V2) and only asks you why: channel lessons go into your
-profile, generic lessons into the skill. Claude also compares what it proposed (dérushage, montage order) with
+profile (improvements to the skill itself only if your profile says you develop it). Claude also compares what it proposed (dérushage, montage order) with
 what you validated. If your profile names a notes folder, Claude writes a note for the video
 there (the work drive is often wiped once a video is out).
 

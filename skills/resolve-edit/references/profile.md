@@ -17,7 +17,7 @@ it is the user's document, they reread and correct it.
 ## Required files
 | File | Read by | Content |
 |---|---|---|
-| `profile.md` | Claude, Step 0 | channel, URL, audience, presenter, language; shooting setup (cameras, fps, log profile, microphones, which sound to use); workstation traps (audio device, drives); where the skill's source repo is and how to reinstall it; where to write the per-video notes; **list of the other files and when to read them** |
+| `profile.md` | Claude, Step 0 | channel, URL, audience, presenter, language; shooting setup (cameras, fps, log profile, microphones, which sound to use); workstation traps (audio device, drives); only if the user develops the skill: its source repo and how to reinstall it (without it, Step 9 never proposes skill improvements); where to write the per-video notes; **list of the other files and when to read them** |
 | `settings.json` | scripts | numbers and keyword lists (below). JSON; lines starting with `//` are comments |
 
 Typical other files (free names, listed in `profile.md`): editing style, editorial policy, video types,
