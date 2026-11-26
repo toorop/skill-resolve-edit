@@ -182,8 +182,7 @@ after each video (Step 9).
 1. Create the video folder inside the channel folder and copy the camera files into a sub-folder named `rushes`
    (any case). Inside it, organise as you like: everything together, one folder per camera, one per day...
    Sidecar files (`.XML`, `.LRF` proxies, backup `.WAV`, thumbnails) can stay: only video files are read.
-2. Open Resolve Studio and create or open the video's project. Check that timeline playback has sound (a frozen
-   audio device makes every render hang at 0%).
+2. Open Resolve Studio and create or open the video's project.
 3. Open Claude Code **in the video folder** (the one that contains `rushes`) and type, for example:
    ```
    /resolve-edit New video: the rushes are in rushes/, the Resolve project is open.

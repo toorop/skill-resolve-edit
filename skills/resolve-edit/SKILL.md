@@ -106,8 +106,6 @@ small sheet at a time; never sweep every rush by default.
   `python SKILL/scripts/fal_key.py set` THEMSELVES in a terminal (hidden input, stored in the Windows Credential
   Manager; other systems: the `FAL_KEY` environment variable). Never ask for the key in chat.
 - On macOS or Linux, tell the user the skill is tested on Windows only, and report what breaks.
-- Ask the user to check that **timeline playback has sound**: a missing or frozen audio output device makes every
-  render hang at 0% (`references/resolve.md`; the profile may name the device and its fix).
 - Ask (one by one): video type (from the profile's video types), rushes to exclude, anything special.
 - If several cameras were used (or the rushes folder suggests it), ask whether their clocks were right: the
   reference is sorted by recording time. A camera with a wrong clock gets a `clock_offset` in the profile.
@@ -132,7 +130,9 @@ small sheet at a time; never sweep every rush by default.
 
 ### Step 2 — Audio export
 `resolve/render_audio.py` (`target_dir = audio`, FLAC 16-bit). A full 35 min export takes ~40 s. If still
-rendering, call again with `{"job": <id>}`. If stuck at 0%: audio device trap (Step 0). Verify duration == reference.
+rendering, call again with `{"job": <id>}`. If stuck at 0%: Resolve's audio output device is probably missing or
+frozen (`references/resolve.md`); give the user the fix from the profile's workstation traps if it names the device,
+else the generic one. Do not ask about sound beforehand. Verify duration == reference.
 
 ### Step 3 — Transcription (costs ~0.008 $/min — tell the user the estimate before starting)
 ```
