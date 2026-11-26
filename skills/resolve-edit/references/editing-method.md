@@ -47,7 +47,8 @@ user do it.
    belongs together; reconnect material shot at different times (an add-on shot later goes right after its topic).
 5. Business announcements not at the very start: after the first strong topic.
 6. End on the outro; if the best piece and the outro are in the same rush, end on it (no join).
-7. Bloopers (optional): after a title card; cut real swear words before them.
+7. Bloopers: never by default (few channels make them). Only when the user wants them (asked at Step 4 when the
+   rushes have genuinely funny moments, or requested): after a title card; cut real swear words before them.
 
 ## Using the channel's retention data (when the user has it)
 - Treat the first 30 seconds as a block to review on its own.

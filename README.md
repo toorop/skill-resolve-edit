@@ -20,7 +20,7 @@ your go-ahead after each step:
 | 4 | **Dérushage report**: failed takes, false starts, off-topic passages, what your editorial policy flags | your decisions, asked one at a time |
 | 5 | **Linear cut**: removals applied, long silences shortened, breaths and air kept | `01 - LINEAIRE v1` + review markers |
 | 6 | **Montage proposal**: the sequences re-ordered for retention, as a table | your validation |
-| 7 | **Montage** built: title card and bloopers, audio cross fades, YouTube loudness, markers | `02 - MONTAGE v1`, copy `03 - FINAL` for your pass |
+| 7 | **Montage** built: bloopers after a title card if you want them, audio cross fades, YouTube loudness, markers | `02 - MONTAGE v1`, copy `03 - FINAL` for your pass |
 | 8 | **Publication package** from your FINAL: titles, thumbnail texts, a contact sheet of thumbnail candidates, description with chapters, tags | `publication/youtube.md` |
 | 9 | **Lessons learned**: what you changed by hand becomes a rule (in your profile or in the skill) | updated profile |
 

@@ -163,6 +163,10 @@ false starts, topics explained twice, passages the profile's editorial policy as
 interjections, and the list of sequences (one per object/topic). Then ask the user, ONE question at a time, what
 to remove. Silent visual moments (arrivals, demonstrations) are invisible in the transcript: when in doubt,
 look at a small contact sheet of the reference at those timecodes (`resolve/export_frames.py`, below), or ask.
+**Bloopers are not a default** (few channels make them): if the rushes hold genuinely funny moments (an incident,
+a slip of the tongue, a fit of laughter) and the profile does not rule them out, ask ONCE, at the end of the
+report, whether the user wants a bloopers section, and list the candidates only if they say yes. Otherwise do not
+mention bloopers, unless the user asks for them.
 Before the first question, save the report: `history.py save derushage_proposal` with the .md as shown and the
 .json of the proposed removals (`{"linear": {"remove": [{"label", "start", "end", "reason"}]}}`).
 Record validated removals in `decisions.json` → `linear.remove`.
@@ -182,7 +186,8 @@ Rules and thresholds: `references/editing-method.md` + the profile's style and `
 ### Step 6 — Montage proposal (propose BEFORE building; the user will watch it entirely)
 From the sequences, propose an order following `references/editing-method.md` and the profile's style (hook
 early, alternate topics, reconnect material shot at different times, the presenter's own structural phrases at
-the right place, crescendo to the best pieces, outro last, optional bloopers with a title). Watch for sentences
+the right place, crescendo to the best pieces, outro last; bloopers after a title card only if the user asked for
+them at Step 4). Watch for sentences
 that continue across rushes (keep those rushes adjacent). Respect the video type (some keep the shooting order).
 Present it as a table with approximate durations and save it (`history.py save montage_proposal`, the .md table
 and a .json `{"montage": {"sequences": [...], "bloopers": [...]}}`) before the user answers; validate; write
