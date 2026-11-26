@@ -5,6 +5,7 @@
  "linear": {
   "keep_head": ["C0101"],
   "keep_tail": [],
+  "keep_gaps": ["C0107"],
   "remove": [
    {"label": "C0101 failed intro, redone in C0102", "start": "00:00:12:10", "end": "00:00:31:02"},
    {"label": "C0104 false start 'So this one... sorry'", "start": 412.5, "end": 418.9},

@@ -217,7 +217,8 @@ passages your editorial policy flags, and the list of sequences (one per object 
 question at a time, what to remove, and records your decisions in `decisions.json`.
 
 **Step 5 — Linear cut** (`01 - LINEAIRE v1`), shooting order kept: validated removals, silences longer than 2 s
-shortened to about 1 s (unless the words before announce a silent demonstration), rush heads and tails trimmed
+shortened to about 1 s (unless the words before announce a silent demonstration, or you asked to keep every
+silence of a rush, e.g. photos shown one after another), rush heads and tails trimmed
 around the speech, isolated slivers dropped. Thresholds in your profile. Claude then looks at a contact sheet of
 every cut (last frame before, first frame after) and tells you what looks wrong; it never removes anything because
 of an image. You spot-check with the markers

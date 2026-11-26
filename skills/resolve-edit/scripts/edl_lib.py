@@ -13,27 +13,41 @@ LINEAR_DEFAULTS = {
     "tail_pad": 0.5,       # ...and ends this long after the last word
     "min_piece_frames": 3,  # drop slivers shorter than this
     "min_isolated": 1.5,   # a piece shorter than this, cut on both sides (rush change = cut), is a parasite flash -> dropped
-    "demo_cues": [],       # words before a long gap that suggest a silent demonstration (language-specific: profile)
+    "demo_cues": None,     # words before a long gap that suggest a silent demonstration; None = DEMO_CUES[language]
     "keep_head": [],       # rush short names whose head is kept as is (e.g. car arrival, sentence continuation)
     "keep_tail": [],
+    "keep_gaps": [],       # rush short names whose long gaps are all kept (things shown one after another in silence)
     "remove": [],          # [{"label", "start", "end"}] validated removals (seconds or HH:MM:SS:FF)
+}
+
+# Fragments matched in the last words before a long gap, used when the profile gives no "demo_cues" (by the
+# profile's "language"). Other languages: put "demo_cues" in the profile.
+DEMO_CUES = {
+    "en": ["look", "see", "watch", "here", "there", "check", "show", "open", "this one"],
+    "fr": ["regard", "hop", "voilà", "voila", "montrer", "ici", "là", "voir", "ouvr", "ceci", "ça."],
 }
 
 
 def compute_linear(decisions, words, clips: Clips, settings=None):
     fps = clips.fps
-    cfg = {**LINEAR_DEFAULTS, **(settings or {}).get("linear", {}), **decisions.get("linear", {})}
+    settings = settings or {}
+    cfg = {**LINEAR_DEFAULTS, **settings.get("linear", {}), **decisions.get("linear", {})}
+    if cfg["demo_cues"] is None:
+        cfg["demo_cues"] = DEMO_CUES.get(str(settings.get("language") or "")[:2].lower(), [])
     remove = [(r["label"], parse_time(r["start"], fps), parse_time(r["end"], fps)) for r in cfg["remove"]]
 
     def removed(t):
         return any(a <= t <= b for _, a, b in remove)
 
     cuts = list(remove)
-    demos, shortened = [], []
+    demos, shortened, kept = [], [], []
     for i in range(len(words) - 1):
         a, b = words[i], words[i + 1]
         gap = b["start"] - a["end"]
         if gap < cfg["gap_min"] or clips.at(a["end"]) != clips.at(b["start"]) or removed(a["end"]) or removed(b["start"]):
+            continue
+        if clips.short(clips.at(a["end"])) in cfg["keep_gaps"]:
+            kept.append({"at": a["end"], "gap": round(gap, 1)})
             continue
         ctx = " ".join(w["text"] for w in words[max(0, i - 5):i + 1]).lower()[-40:]
         if any(c in ctx for c in cfg["demo_cues"]):
@@ -113,6 +127,8 @@ def compute_linear(decisions, words, clips: Clips, settings=None):
         "heads_tails_trimmed": trimmed,
         "isolated_slivers_dropped": dropped,
     }
+    if kept:  # only when keep_gaps is used, so plans without it stay byte-identical
+        report["gaps_kept_by_request"] = [(tc(g["at"], fps), g["gap"]) for g in kept]
     return ref, [(l, round(a, 3), round(b, 3)) for l, a, b in cuts if b > a], demos, report
 
 

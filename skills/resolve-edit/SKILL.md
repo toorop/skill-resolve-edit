@@ -163,13 +163,15 @@ false starts, topics explained twice, passages the profile's editorial policy as
 interjections, and the list of sequences (one per object/topic). Then ask the user, ONE question at a time, what
 to remove. Silent visual moments (arrivals, demonstrations) are invisible in the transcript: when in doubt,
 look at a small contact sheet of the reference at those timecodes (`resolve/export_frames.py`, below), or ask.
+A rush where things are shown one after another in silence (photos, a collection): propose to keep all its
+silences (`keep_gaps`, `references/editing-method.md`), since the cue words only catch some of them.
 **Bloopers are not a default** (few channels make them): if the rushes hold genuinely funny moments (an incident,
 a slip of the tongue, a fit of laughter) and the profile does not rule them out, ask ONCE, at the end of the
 report, whether the user wants a bloopers section, and list the candidates only if they say yes. Otherwise do not
 mention bloopers, unless the user asks for them.
 Before the first question, save the report: `history.py save derushage_proposal` with the .md as shown and the
 .json of the proposed removals (`{"linear": {"remove": [{"label", "start", "end", "reason"}]}}`).
-Record validated removals in `decisions.json` → `linear.remove`.
+Record validated removals in `decisions.json` → `linear.remove` (and `keep_head` / `keep_tail` / `keep_gaps`).
 
 ### Step 5 — Linear cut
 `python SKILL/scripts/build_linear_edl.py decisions.json transcripts/transcript.json transcripts/clips.json edl/linear_v1.json`

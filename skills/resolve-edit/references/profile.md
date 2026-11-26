@@ -38,6 +38,7 @@ linear.head_pad          kept before the first word of a rush (s, default 0.3)
 linear.tail_pad          kept after the last word of a rush (s, default 0.5)
 linear.min_isolated      isolated pieces shorter than this are dropped (s, default 1.5)
 linear.demo_cues         word fragments before a long gap that mean "silent demonstration": keep the gap
+                         (without the key: built-in English or French list, from "language"; other languages: set it)
 flags.<category>         regex alternatives for flag_passages.py (e.g. divisive, youtube, interjection, retake)
 thumbnail.cues           [[regex, weight], ...] moments where the presenter shows something
 thumbnail.show_delay     seconds after the cue (default 1.5)

@@ -41,8 +41,9 @@
     "head_pad": 0.3,
     "tail_pad": 0.5,
     "min_isolated": 1.5,
-    // Word fragments said before a silent demonstration (keep the gap), in the channel's language
-    "demo_cues": ["look", "here", "see", "there", "this"]
+    // Word fragments said before a silent demonstration (keep the gap), in the channel's language.
+    // Remove the key to use the skill's built-in list for "language" (English and French only)
+    "demo_cues": ["look", "see", "watch", "here", "there", "check", "show", "open", "this one"]
   },
 
   // Regular expressions for the dérushage pre-scan (each alternative starts at a word boundary)

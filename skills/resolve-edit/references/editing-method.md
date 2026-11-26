@@ -18,13 +18,17 @@
 |---|---|---|
 | Never touch gaps shorter than | `gap_min` 2.0 s | breaths, air |
 | Longer gaps → keep on each side | `keep_air` 0.5 s (gap becomes ~1 s) | |
-| ...unless the words before suggest a demonstration | `demo_cues` (profile, language-specific) | silent showing/opening |
+| ...unless the words before suggest a demonstration | `demo_cues` (profile; else built-in list for the profile's `language`, English and French) | silent showing/opening |
 | Each raw rush starts before the first word | `head_pad` 0.3 s | camera start, framing |
 | ...and ends after the last word | `tail_pad` 0.5 s | |
 | Isolated piece shorter than, cut on both sides (a rush change counts as a cut) | `min_isolated` 1.5 s → dropped, plus the orphan end of its sentence in the next rush | parasite flash ("Right.", "So, let's do / ...") |
 | `keep_head` / `keep_tail` exceptions | per video (`decisions.json`) | silent visual intro (arrival), sentence continuing across rushes |
+| `keep_gaps` exception: no gap of the rush is shortened (head and tail still trimmed) | per video (`decisions.json`) | things shown one after another in silence (photos, a collection) |
 - The transcript cannot see images. Rush heads can hold real content (an arrival by car): ask when a rush
-  head/tail is long and silent.
+  head/tail is long and silent. `demo_cues` only read the words BEFORE a gap: in a scene where things are shown
+  one after another, many silences have no cue word (first real video: 4 gaps kept, 7 shortened in one such
+  rush). When a rush looks like that (several demonstrations, an object or collection presented), propose
+  `keep_gaps` for it at Step 4.
 - Sentences can continue across rushes: keep both rushes adjacent in the montage. But if the part before the rush
   change is a short isolated sliver, drop it AND the orphan continuation up to the first punctuation.
 

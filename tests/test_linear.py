@@ -51,6 +51,32 @@ class Gaps(unittest.TestCase):
         self.assertEqual(report["gaps_shortened"], [])
         self.assertEqual(ref, [[18, 148]])                          # 0.72 s .. 5.42 + 0.5 = 5.92 s
 
+    def test_demo_cues_default_to_the_profile_language(self):
+        spec = [("Now", 1.02, 1.42), ("look", 1.42, 1.82), ("Done.", 5.02, 5.42)]
+        _, _, demos, _ = run(spec, settings={"language": "en"})                       # built-in English list
+        self.assertEqual(len(demos), 1)
+        spec_fr = [("Et", 1.02, 1.42), ("regardez", 1.42, 1.82), ("Voilà.", 5.02, 5.42)]
+        _, _, demos, _ = run(spec_fr, settings={"language": "fr"})                    # built-in French list
+        self.assertEqual(len(demos), 1)
+        _, _, demos, report = run(spec, settings={"language": "en", "linear": {"demo_cues": []}})
+        self.assertEqual(demos, [])                                                    # the profile's list wins
+        self.assertEqual(len(report["gaps_shortened"]), 1)
+        _, _, demos, _ = run(spec, settings={})                                        # no language, no list
+        self.assertEqual(demos, [])
+
+    def test_keep_gaps_keeps_every_long_gap_of_the_rush_but_trims_its_head_and_tail(self):
+        rushes = (("A.MP4", 250), ("B.MP4", 250))
+        spec = [("One", 1.02, 3.02), ("two.", 6.62, 8.62),         # A: 3.6 s gap
+                ("Three", 11.02, 11.42), ("four.", 15.02, 15.42)]  # B: 3.6 s gap, kept by request
+        ref, cuts, demos, report = run(spec, rushes=rushes, decisions={"linear": {"keep_gaps": ["B"]}})
+        # A: 18..88 and 153..228 (gap 3.52..6.12 s cut); B: head from 10.72 s -> 268, tail 15.92 s -> 398, no gap cut
+        self.assertEqual(ref, [[18, 88], [153, 228], [268, 398]])
+        self.assertEqual([g[1] for g in report["gaps_shortened"]], [3.6])
+        self.assertEqual([g[1] for g in report["gaps_kept_by_request"]], [3.6])
+        self.assertEqual(demos, [])
+        _, _, _, report = run(spec, rushes=rushes)
+        self.assertNotIn("gaps_kept_by_request", report)             # absent when unused (plans stay identical)
+
     def test_keep_head_and_keep_tail(self):
         ref, _, _, report = run(self.SPEC, decisions={"linear": {"keep_head": ["A"], "keep_tail": ["A"]}})
         self.assertEqual(ref, [[0, 113], [163, 500]])
