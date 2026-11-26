@@ -151,9 +151,11 @@ python SKILL/scripts/split_transcript.py transcripts/transcript.json transcripts
 ```
 then `resolve/set_transcription.py` with `transcription = <video folder>\transcripts\resolve_transcription.json`.
 It reads every rush back and lists any difference (`readback_mismatch` must be empty). A rush that already has a
-transcription is kept unless `overwrite: True` (ask the user). With the free Resolve, skip this step. Tell the
-user how to see it: Media Pool, right-click a rush > AI Tools > Audio Transcription > Transcribe (on a transcribed
-clip it only opens the Transcription window).
+transcription is kept unless `overwrite: True` (ask the user). With the free Resolve, skip this step. When
+reporting it, say plainly that **Resolve transcribed nothing**: the Scribe transcript was copied into Resolve, cut
+by rush (no second transcription, no cost), and the readback matches. Tell the user how to see it: Media Pool,
+right-click a rush > AI Tools > Audio Transcription > Transcribe (on a transcribed clip it only opens the
+Transcription window).
 
 ### Step 4 — Dérushage report (read `transcript_lisible.txt` + `flags.txt`)
 Present, with reference timecodes: failed takes and retakes, off-topic passages (passers-by, cameraman),
