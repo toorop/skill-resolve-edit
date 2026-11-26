@@ -53,7 +53,20 @@
   Text+ inputs. Folders can't be renamed. Use ASCII names; for Text+ use
   `comp.Execute("comp:FindTool('Template'):SetInput('StyledText', 'B\\195\\170tisier')")` (Lua decimal escapes).
   `GetInput` readback shows mojibake either way — verify visually.
-- `InsertFusionTitleIntoTimeline("Text+")` inserts at the playhead on V1, 125 frames (5 s).
+- `InsertFusionTitleIntoTimeline("Text+")` inserts at the playhead on V1, 125 frames (5 s); its comp
+  (`item.GetFusionCompByIndex(1)`, render range 0-124) holds the tools `Template` (the Text+) and `MediaOut1`.
+- **Animate a Text+ from Python, never from Lua** (measured on Studio 21.2.0.6, first real video): on the tool
+  (`tp = comp.FindTool("Template")`), inside `comp.Lock()` / `comp.Unlock()`: `tp.AddModifier("Size",
+  "BezierSpline")` then `tp.SetInput("Size", value, frame)` for each keyframe (same for `AngleZ`...); plain inputs
+  with `tp.SetInput("Font", "Arial Black")`, `"Style"`, `"Red1"/"Green1"/"Blue1"` (0-1). Read back with
+  `tp.GetInput("Size", frame)` (interpolated between keys), then check rendered frames (`export_frames.py`). The
+  same thing as a multi-line Lua script through `comp.Execute` applied NOTHING, not even the font, with no error:
+  keep `comp.Execute` for the single-statement accented `StyledText` above.
+- **Shot on V2 (cutaway, J-cut picture)** (measured on 21.2.0.6): `tl.AddTrack("video")` if the track is missing,
+  then `mp.AppendToTimeline([{"mediaPoolItem": clip, "startFrame": src_in, "endFrame": src_in + n, "mediaType": 1,
+  "trackIndex": 2, "recordFrame": tl.GetStartFrame() + record_frame}])` (endFrame exclusive, clip frames;
+  `mediaType` 1 = video only, no audio item). The item lands exactly at `record_frame` with the requested source
+  offset. Not yet used by `build_timeline.py`.
 - `TimelineItem.AddTransition({"type": "Cross Fade +3 dB", "category": "audio", "position": "end",
   "alignment": "center", "duration": 4})`; fallback alignment "left" when there are no handles.
 - `SetFades` = fade dips (NOT what the user wants at cuts).
